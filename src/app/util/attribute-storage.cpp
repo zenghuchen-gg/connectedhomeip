@@ -32,6 +32,7 @@
 #include <app/util/ember-strings.h>
 #include <app/util/endpoint-config-api.h>
 #include <app/util/generic-callbacks.h>
+#include <data-model-providers/codegen/CodegenDataModelProvider.h>
 #include <lib/core/CHIPConfig.h>
 #include <lib/core/CHIPError.h>
 #include <lib/support/CodeUtils.h>
@@ -1593,7 +1594,14 @@ DataVersion * emberAfDataVersionStorage(const ConcreteClusterPath & aConcreteClu
 
 DataModel::ProviderChangeListener * emberAfGlobalInteractionModelAttributesChangedListener()
 {
-    return &InteractionModelEngine::GetInstance()->GetReportingEngine();
+    // Return reporting engine (default ProviderChangeListener) if Provider has not started. This guarantees that this function
+    // never returns a nullptr.
+    DataModel::ProviderChangeListener * listener = CodegenDataModelProvider::Instance().GetProviderChangeListener();
+    if (listener == nullptr)
+    {
+        return &InteractionModelEngine::GetInstance()->GetReportingEngine();
+    }
+    return listener;
 }
 
 void emberAfAttributeChanged(EndpointId endpoint, ClusterId clusterId, AttributeId attributeId,

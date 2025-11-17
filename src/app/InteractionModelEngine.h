@@ -422,12 +422,16 @@ public:
 
     DataModel::Provider * GetDataModelProvider() const;
 
-    // MUST NOT be used while the interaction model engine is running as interaction
-    // model functionality (e.g. active reads/writes/subscriptions) rely on data model
-    // state
+    // MUST NOT be used while the interaction model engine is running as interaction  model functionality (e.g. active
+    // reads/writes/subscriptions) rely on data model state.
+    // Callers could pass a customized ProviderChangeListener. If not passed (nullptr by default), mReportingEngine will be used as
+    // the ProviderChangeListener.
     //
     // Returns the old data model provider value.
-    DataModel::Provider * SetDataModelProvider(DataModel::Provider * model);
+    DataModel::Provider * Startup(DataModel::Provider * model, DataModel::ProviderChangeListener * listener = nullptr);
+
+    // TODO: remove after replacing all `SetDataModelProvider` with `Startup` in unit tests.
+    DataModel::Provider * SetDataModelProvider(DataModel::Provider * model) { return Startup(model); }
 
 private:
     /* DataModel::ActionContext implementation */

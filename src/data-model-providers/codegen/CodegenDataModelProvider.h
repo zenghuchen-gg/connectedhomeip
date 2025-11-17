@@ -88,6 +88,12 @@ public:
 
     void Temporary_ReportAttributeChanged(const AttributePathParams & path) override;
 
+    /// Gets the ProviderChangeListener associated with the current InteractionModelContext.
+    /// Return a pointer to the ProviderChangeListener if the context has been initialized (e.g., after Startup has been called),
+    /// otherwise returns nullptr.
+    /// Callers MUST check for nullptr before dereferencing the returned pointer.
+    DataModel::ProviderChangeListener * GetProviderChangeListener();
+
 protected:
     // Temporary hack for a test: Initializes the data model for testing purposes only.
     // This method serves as a placeholder and should NOT be used outside of specific tests.
