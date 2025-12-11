@@ -162,8 +162,10 @@ app::Clusters::NetworkCommissioning::Instance sWiFiCommissioningInstance(0, &(Ne
 CHIP_ERROR AppTask::Init()
 {
     // Initialize CHIP stack
-    LOG_INF("Init CHIP stack");
-
+    for (int i = 0; i < 10; i++)
+        LOG_INF("Init CHIP stack");
+    for (int i = 0; i < 10; i++)
+        LOG_INF("This is Jack How are you");
     CHIP_ERROR err = chip::Platform::MemoryInit();
     if (err != CHIP_NO_ERROR)
     {
@@ -279,7 +281,7 @@ CHIP_ERROR AppTask::Init()
     static DeviceLayer::FactoryResetTestEventTriggerHandler sFactoryResetEventTriggerHandler{};
     static DefaultTimerDelegate sTimerDelegate;
     static chip::app::DataModel::JitterDeferredProviderChangeListener sJitterDeferredProviderChangeListener(
-        &chip::app::InteractionModelEngine::GetInstance()->GetReportingEngine(), sTimerDelegate);
+        &chip::app::InteractionModelEngine::GetInstance()->GetReportingEngine(), sTimerDelegate, 0, 0);
 
     VerifyOrDie(sTestEventTriggerDelegate.Init(ByteSpan(sTestEventTriggerEnableKey)) == CHIP_NO_ERROR);
     VerifyOrDie(sTestEventTriggerDelegate.AddHandler(&sOtaTestEventTriggerHandler) == CHIP_NO_ERROR);

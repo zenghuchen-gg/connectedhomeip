@@ -605,7 +605,11 @@ Status InteractionModelEngine::OnInvokeCommandRequest(Messaging::ExchangeContext
         commandResponder->TestOnlyInvokeCommandRequestWithFaultsInjected(
             apExchangeContext, std::move(aPayload), aIsTimedInvoke, CommandHandlerImpl::NlFaultInjectionType::SkipSecondResponse);
         return Status::Success;);
-    commandResponder->OnInvokeCommandRequest(apExchangeContext, std::move(aPayload), aIsTimedInvoke);
+    uint32_t delay;
+    commandResponder->OnInvokeCommandRequest(apExchangeContext, std::move(aPayload), aIsTimedInvoke, &delay);
+    // ChipLogError(InteractionModel, "The delay recevied %x", delay);
+    mDataModelProvider->Update(delay);
+
     return Status::Success;
 }
 

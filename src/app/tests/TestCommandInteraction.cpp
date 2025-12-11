@@ -1433,7 +1433,7 @@ TEST_F(TestCommandInteraction, TestCommandHandler_WithOnInvokeReceivedNotExistCo
     mockCommandHandlerDelegate.ResetCounter();
     MockCommandResponder mockCommandResponder;
     Protocols::InteractionModel::Status status =
-        commandHandler.OnInvokeCommandRequest(mockCommandResponder, std::move(commandDatabuf), false);
+        commandHandler.OnInvokeCommandRequest(mockCommandResponder, std::move(commandDatabuf), false, 0);
 
     EXPECT_EQ(status, Protocols::InteractionModel::Status::InvalidAction);
     EXPECT_TRUE(mockCommandResponder.mChunks.IsNull());
@@ -1456,7 +1456,7 @@ TEST_F(TestCommandInteraction, TestCommandHandler_WithOnInvokeReceivedEmptyDataM
             GenerateInvokeRequest(commandDatabuf, messageIsTimed, kTestCommandIdNoData);
             MockCommandResponder mockCommandResponder;
             Protocols::InteractionModel::Status status =
-                commandHandler.OnInvokeCommandRequest(mockCommandResponder, std::move(commandDatabuf), transactionIsTimed);
+                commandHandler.OnInvokeCommandRequest(mockCommandResponder, std::move(commandDatabuf), transactionIsTimed, 0);
 
             if (messageIsTimed != transactionIsTimed)
             {
@@ -1865,7 +1865,8 @@ TEST_F_FROM_FIXTURE(TestCommandInteraction, TestCommandHandler_RejectsMultipleCo
     mockCommandHandlerDelegate.ResetCounter();
     commandDispatchedCount = 0;
 
-    Protocols::InteractionModel::Status status = commandHandler.ProcessInvokeRequest(std::move(commandDatabuf), false);
+    uint32_t delay;
+    Protocols::InteractionModel::Status status = commandHandler.ProcessInvokeRequest(std::move(commandDatabuf), false, &delay);
     EXPECT_EQ(status, Protocols::InteractionModel::Status::InvalidAction);
 
     EXPECT_EQ(commandDispatchedCount, 0u);
@@ -1919,7 +1920,7 @@ TEST_F_FROM_FIXTURE(TestCommandInteraction, TestCommandHandler_RejectMultipleCom
     CommandHandlerImpl commandHandler(&mockCommandHandlerDelegate);
     MockCommandResponder mockCommandResponder;
     Protocols::InteractionModel::Status status =
-        commandHandler.OnInvokeCommandRequest(mockCommandResponder, std::move(commandDatabuf), false);
+        commandHandler.OnInvokeCommandRequest(mockCommandResponder, std::move(commandDatabuf), false, 0);
     EXPECT_EQ(status, Protocols::InteractionModel::Status::InvalidAction);
     EXPECT_TRUE(mockCommandResponder.mChunks.IsNull());
 
@@ -1975,7 +1976,8 @@ TEST_F_FROM_FIXTURE(TestCommandInteraction, TestCommandHandler_AcceptMultipleCom
     mockCommandHandlerDelegate.ResetCounter();
     commandDispatchedCount = 0;
 
-    Protocols::InteractionModel::Status status = commandHandler.ProcessInvokeRequest(std::move(commandDatabuf), false);
+    uint32_t delay;
+    Protocols::InteractionModel::Status status = commandHandler.ProcessInvokeRequest(std::move(commandDatabuf), false, &delay);
     EXPECT_EQ(status, Protocols::InteractionModel::Status::Success);
 
     EXPECT_EQ(commandDispatchedCount, 2u);

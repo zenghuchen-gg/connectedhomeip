@@ -49,7 +49,7 @@ namespace {
 #endif
 
 constexpr uint8_t kLogHdlcAddress = 1;   // Send log messages to HDLC address 1 (other than RPC communication)
-constexpr size_t kWriteBufferSize = 128; // Buffer for constructing HDLC frames
+constexpr size_t kWriteBufferSize = 256; // Buffer for constructing HDLC frames
 
 // Exclusive access to the backend is needed to make sure that log messages coming
 // from different threads are not interwoven.
@@ -72,10 +72,10 @@ int putString(uint8_t * buffer, size_t size, void * /* ctx */)
     for (size_t i = 0; i < size; ++i)
     {
         // Send each line excluding "\r\n" in a separate frame
-
-        if (buffer[i] == '\r')
-            continue;
-
+        /*
+                if (buffer[i] == '\r')
+                    continue;
+        */
         if (buffer[i] == '\n')
         {
             flush();

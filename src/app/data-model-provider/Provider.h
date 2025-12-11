@@ -47,6 +47,7 @@ public:
 
     // `context` references  will be guaranteed valid until Shutdown is called()
     virtual CHIP_ERROR Startup(InteractionModelContext context) { return CHIP_NO_ERROR; }
+    virtual CHIP_ERROR Update(const uint32_t data) { return CHIP_NO_ERROR; }
     virtual CHIP_ERROR Shutdown() { return CHIP_NO_ERROR; }
 
     /// NOTE: this code is NOT required to handle `List` global attributes:

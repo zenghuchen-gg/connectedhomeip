@@ -114,7 +114,7 @@ CHIP_ERROR CommandHandlerImpl::AllocateBuffer()
 }
 
 Status CommandHandlerImpl::OnInvokeCommandRequest(CommandHandlerExchangeInterface & commandResponder,
-                                                  System::PacketBufferHandle && payload, bool isTimedInvoke)
+                                                  System::PacketBufferHandle && payload, bool isTimedInvoke, uint32_t * jitter)
 {
     VerifyOrDieWithMsg(mState == State::Idle, DataManagement, "state should be Idle");
 
@@ -124,7 +124,7 @@ Status CommandHandlerImpl::OnInvokeCommandRequest(CommandHandlerExchangeInterfac
     // call the CommandHandlerImpl::OnDone callback when this function returns.
     Handle workHandle(this);
 
-    Status status = ProcessInvokeRequest(std::move(payload), isTimedInvoke);
+    Status status = ProcessInvokeRequest(std::move(payload), isTimedInvoke, jitter);
     mGoneAsync    = true;
     return status;
 }
@@ -251,7 +251,7 @@ CHIP_ERROR CommandHandlerImpl::ValidateInvokeRequestMessageAndBuildRegistry(Invo
     return invokeRequestMessage.ExitContainer();
 }
 
-Status CommandHandlerImpl::ProcessInvokeRequest(System::PacketBufferHandle && payload, bool isTimedInvoke)
+Status CommandHandlerImpl::ProcessInvokeRequest(System::PacketBufferHandle && payload, bool isTimedInvoke, uint32_t * delay)
 {
     CHIP_ERROR err = CHIP_NO_ERROR;
     System::PacketBufferTLVReader reader;
@@ -267,11 +267,11 @@ Status CommandHandlerImpl::ProcessInvokeRequest(System::PacketBufferHandle && pa
     {
         SetGroupRequest(true);
     }
-
     // When updating this code, please remember to make corresponding changes to TestOnlyInvokeCommandRequestWithFaultsInjected.
     VerifyOrReturnError(invokeRequestMessage.GetSuppressResponse(&mSuppressResponse) == CHIP_NO_ERROR, Status::InvalidAction);
     VerifyOrReturnError(invokeRequestMessage.GetTimedRequest(&mTimedRequest) == CHIP_NO_ERROR, Status::InvalidAction);
     VerifyOrReturnError(invokeRequestMessage.GetInvokeRequests(&invokeRequests) == CHIP_NO_ERROR, Status::InvalidAction);
+    VerifyOrReturnError(invokeRequestMessage.GetDelayRequest(delay) == CHIP_NO_ERROR, Status::InvalidAction);
     VerifyOrReturnError(mTimedRequest == isTimedInvoke, Status::TimedRequestMismatch);
 
     {

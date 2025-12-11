@@ -39,13 +39,13 @@ class JitterDeferredProviderChangeListener : public ProviderChangeListener, publ
 {
 public:
     static constexpr uint32_t kMaxAttributePathsBufferSize       = 10;
-    static constexpr uint32_t kDeferAttributePathBaseTimeoutMs   = 1000;
-    static constexpr uint32_t kDeferAttributePathJitterTimeoutMs = 1000;
+    static constexpr uint16_t kDeferAttributePathBaseTimeoutMs   = 1000;
+    static constexpr uint16_t kDeferAttributePathJitterTimeoutMs = 1000;
 
     JitterDeferredProviderChangeListener(ProviderChangeListener * aUnderlyingListener, TimerDelegate & aTimer,
-                                         uint32_t aDeferAttributePathBaseTimeoutMs, uint32_t aDeferAttributePathJitterTimeoutMs) :
-        mUnderlyingListener(aUnderlyingListener),
-        mTimer(aTimer), mDeferAttributePathBaseTimeoutMs(aDeferAttributePathBaseTimeoutMs),
+                                         uint16_t aDeferAttributePathBaseTimeoutMs, uint16_t aDeferAttributePathJitterTimeoutMs) :
+        mUnderlyingListener(aUnderlyingListener), mTimer(aTimer),
+        mDeferAttributePathBaseTimeoutMs(aDeferAttributePathBaseTimeoutMs),
         mDeferAttributePathJitterTimeoutMs(aDeferAttributePathJitterTimeoutMs)
     {}
 
@@ -55,6 +55,9 @@ public:
     {}
 
     void MarkDirty(const AttributePathParams & path) override;
+
+    void Update(const uint32_t delay) override;
+
     /**
      * @brief Called when the identify timer fires.
      */
@@ -65,8 +68,8 @@ private:
 
     ProviderChangeListener * mUnderlyingListener;
     TimerDelegate & mTimer;
-    uint32_t mDeferAttributePathBaseTimeoutMs;
-    uint32_t mDeferAttributePathJitterTimeoutMs;
+    uint16_t mDeferAttributePathBaseTimeoutMs;
+    uint16_t mDeferAttributePathJitterTimeoutMs;
     std::array<AttributePathParams, kMaxAttributePathsBufferSize> mAttributePaths;
     uint32_t mCurrentIndex = 0;
 };

@@ -1,0 +1,7 @@
+/*
+ * Disable hardware flow control on the default UART port (VCOM)
+ * to prevent log output from stalling.
+ */
+&uart0 {
+	hw-flow-control = <0>;
+};

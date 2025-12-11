@@ -132,6 +132,9 @@ public:
     /* ProviderChangeListener implementation */
     void MarkDirty(const AttributePathParams & path) override;
 
+    /* ProviderChangeListener implementation */
+    void Update(const uint32_t data) override;
+
 private:
     /**
      * Main work-horse function that executes the run-loop.

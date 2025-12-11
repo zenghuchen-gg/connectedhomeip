@@ -27,9 +27,13 @@ namespace DataModel {
 
 void JitterDeferredProviderChangeListener::MarkDirty(const AttributePathParams & path)
 {
-    if (path.mEndpointId == kRootEndpointId)
+    // Do not add any delay if end point id is root, or if there is no delay requirmenet
+    if (path.mEndpointId == kRootEndpointId || (mDeferAttributePathJitterTimeoutMs == 0 && mDeferAttributePathBaseTimeoutMs == 0))
     {
-        mUnderlyingListener->MarkDirty(path);
+        if (mUnderlyingListener != nullptr)
+        {
+            mUnderlyingListener->MarkDirty(path);
+        }
         return;
     }
 
@@ -49,10 +53,20 @@ void JitterDeferredProviderChangeListener::MarkDirty(const AttributePathParams &
     mAttributePaths[mCurrentIndex++] = path;
     if (!mTimer.IsTimerActive(this))
     {
-        uint32_t jitterMs =
-            (mDeferAttributePathJitterTimeoutMs == 0) ? 0 : Crypto::GetRandU32() % mDeferAttributePathJitterTimeoutMs;
-        mTimer.StartTimer(this, System::Clock::Milliseconds32(mDeferAttributePathBaseTimeoutMs + jitterMs));
+        uint16_t jitterMs =
+            (mDeferAttributePathJitterTimeoutMs == 0) ? 0 : Crypto::GetRandU16() % mDeferAttributePathJitterTimeoutMs;
+        // ChipLogError(DataManagement, "Base: %u  Jitter: %u Final: %u", mDeferAttributePathBaseTimeoutMs,
+        //              mDeferAttributePathJitterTimeoutMs, mDeferAttributePathBaseTimeoutMs + jitterMs);
+        mTimer.StartTimer(this, System::Clock::Milliseconds16(mDeferAttributePathBaseTimeoutMs + jitterMs));
     }
+}
+
+void JitterDeferredProviderChangeListener::Update(const uint32_t delay)
+{
+    mDeferAttributePathBaseTimeoutMs   = (uint16_t) (delay >> 16);
+    mDeferAttributePathJitterTimeoutMs = (uint16_t) (delay & 0xFFFF);
+    // ChipLogError(DataManagement, "Received update requriement:%x %x", mDeferAttributePathBaseTimeoutMs,
+    //              mDeferAttributePathJitterTimeoutMs);
 }
 
 void JitterDeferredProviderChangeListener::FlushDirtyPaths()
@@ -64,12 +78,16 @@ void JitterDeferredProviderChangeListener::FlushDirtyPaths()
             mUnderlyingListener->MarkDirty(mAttributePaths[i]);
         }
     }
+    // ChipLogError(DataManagement, "Flushed: %u dirty paths", mCurrentIndex);
     mCurrentIndex = 0;
 }
 
 void JitterDeferredProviderChangeListener::TimerFired()
 {
     FlushDirtyPaths();
+    // Just Delay once
+    mDeferAttributePathBaseTimeoutMs   = 0;
+    mDeferAttributePathJitterTimeoutMs = 0;
 }
 
 } // namespace DataModel

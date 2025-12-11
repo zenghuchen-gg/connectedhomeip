@@ -60,6 +60,7 @@ public:
 
     /// Generic model implementations
     CHIP_ERROR Startup(DataModel::InteractionModelContext context) override;
+    virtual CHIP_ERROR Update(const uint32_t data) override;
     CHIP_ERROR Shutdown() override;
 
     DataModel::ActionReturnStatus ReadAttribute(const DataModel::ReadAttributeRequest & request,

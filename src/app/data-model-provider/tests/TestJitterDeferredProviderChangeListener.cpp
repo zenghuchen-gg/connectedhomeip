@@ -58,6 +58,7 @@ public:
     }
 
     void Reset() { mPaths.clear(); }
+    void Update(const uint32_t delay) override { return; }
 
     std::vector<AttributePathParams> mPaths;
 };

@@ -36,6 +36,7 @@ enum class Tag : uint8_t
     kSuppressResponse = 0,
     kTimedRequest     = 1,
     kInvokeRequests   = 2,
+    kDelayRequest     = 3,
 };
 
 class Parser : public MessageParser
@@ -60,6 +61,14 @@ public:
      *          #CHIP_END_OF_TLV if there is no such element
      */
     CHIP_ERROR GetTimedRequest(bool * const apTimedRequest) const;
+
+    /**
+     *  @brief Get DelayRequest. Next() must be called before accessing them.
+     *
+     *  @return #CHIP_NO_ERROR on success
+     *          #CHIP_END_OF_TLV if there is no such element
+     */
+    CHIP_ERROR GetDelayRequest(uint32_t * const apDelay) const;
 
     /**
      *  @brief Get a parser for an InvokeRequests.
@@ -90,6 +99,11 @@ public:
      *  @brief This is flag to indication if ths action is part of a timed invoke transaction
      */
     InvokeRequestMessage::Builder & TimedRequest(const bool aTimedRequest);
+
+    /**
+     *  @brief This is the delay to servers that should be added before DataReport
+     */
+    InvokeRequestMessage::Builder & DelayRequest(const uint32_t aDelayRequest);
 
     /**
      *  @brief Initialize a InvokeRequests::Builder for writing into the TLV stream

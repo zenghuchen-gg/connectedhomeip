@@ -165,7 +165,8 @@ public:
      * release after the caller of OnInvokeCommandRequest receives the OnDone callback.
      */
     Protocols::InteractionModel::Status OnInvokeCommandRequest(CommandHandlerExchangeInterface & commandResponder,
-                                                               System::PacketBufferHandle && payload, bool isTimedInvoke);
+                                                               System::PacketBufferHandle && payload, bool isTimedInvoke,
+                                                               uint32_t * jitter);
 
     /**
      * Checks that all CommandDataIB within InvokeRequests satisfy the spec's general
@@ -392,7 +393,8 @@ private:
 
     CHIP_ERROR FinalizeInvokeResponseMessage(bool aHasMoreChunks);
 
-    Protocols::InteractionModel::Status ProcessInvokeRequest(System::PacketBufferHandle && payload, bool isTimedInvoke);
+    Protocols::InteractionModel::Status ProcessInvokeRequest(System::PacketBufferHandle && payload, bool isTimedInvoke,
+                                                             uint32_t * delay);
 
     /**
      * Called internally to signal the completion of all work on this object, gracefully close the

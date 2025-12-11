@@ -201,7 +201,7 @@ void CommandResponseSender::Close()
 }
 
 void CommandResponseSender::OnInvokeCommandRequest(Messaging::ExchangeContext * ec, System::PacketBufferHandle && payload,
-                                                   bool isTimedInvoke)
+                                                   bool isTimedInvoke, uint32_t * delay)
 {
     VerifyOrDieWithMsg(ec != nullptr, DataManagement, "Incoming exchange context should not be null");
     VerifyOrDieWithMsg(mState == State::ReadyForInvokeResponses, DataManagement, "state should be ReadyForInvokeResponses");
@@ -214,7 +214,7 @@ void CommandResponseSender::OnInvokeCommandRequest(Messaging::ExchangeContext * 
     // Grabbing Handle to prevent mCommandHandler from calling OnDone before OnInvokeCommandRequest returns.
     // This allows us to send a StatusResponse error instead of any potentially queued up InvokeResponseMessages.
     CommandHandler::Handle workHandle(&mCommandHandler);
-    Status status = mCommandHandler.OnInvokeCommandRequest(*this, std::move(payload), isTimedInvoke);
+    Status status = mCommandHandler.OnInvokeCommandRequest(*this, std::move(payload), isTimedInvoke, delay);
     if (status != Status::Success)
     {
         VerifyOrDie(mState == State::ReadyForInvokeResponses);

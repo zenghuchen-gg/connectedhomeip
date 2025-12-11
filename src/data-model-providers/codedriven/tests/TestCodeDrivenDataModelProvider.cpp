@@ -47,6 +47,7 @@ class TestProviderChangeListener : public DataModel::ProviderChangeListener
 public:
     void MarkDirty(const AttributePathParams & path) override { mDirtyList.push_back(path); }
     std::vector<AttributePathParams> mDirtyList;
+    void Update(const uint32_t delay) override { return; }
 };
 
 class TestActionContext : public DataModel::ActionContext
@@ -60,8 +61,7 @@ class MockServerCluster : public DefaultServerCluster
 public:
     MockServerCluster(std::initializer_list<ConcreteClusterPath> paths, DataVersion dataVersion,
                       BitFlags<DataModel::ClusterQualityFlags> flags) :
-        DefaultServerCluster({ 0, 0 }),
-        mPaths(paths), mDataVersion(dataVersion), mFlags(flags),
+        DefaultServerCluster({ 0, 0 }), mPaths(paths), mDataVersion(dataVersion), mFlags(flags),
         mAttributeEntry(1, BitMask<DataModel::AttributeQualityFlags>(), std::nullopt, std::nullopt)
     {}
 

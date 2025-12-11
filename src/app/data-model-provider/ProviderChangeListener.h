@@ -40,6 +40,9 @@ public:
     ///
     /// Wildcards are supported.
     virtual void MarkDirty(const AttributePathParams & path) = 0;
+
+    /// Update internal parameters (Delay)
+    virtual void Update(const uint32_t delay) = 0;
 };
 
 } // namespace DataModel

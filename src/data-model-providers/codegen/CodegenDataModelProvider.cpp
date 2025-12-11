@@ -164,6 +164,12 @@ CHIP_ERROR CodegenDataModelProvider::Startup(DataModel::InteractionModelContext 
     });
 }
 
+CHIP_ERROR CodegenDataModelProvider::Update(const uint32_t data)
+{
+    mContext->dataModelChangeListener.Update(data);
+    return CHIP_NO_ERROR;
+}
+
 DataModel::ProviderChangeListener * CodegenDataModelProvider::GetProviderChangeListener()
 {
     if (!mContext)

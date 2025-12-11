@@ -106,6 +106,11 @@ CHIP_ERROR InvokeRequestMessage::Parser::GetTimedRequest(bool * const apTimedReq
     return GetSimpleValue(to_underlying(Tag::kTimedRequest), TLV::kTLVType_Boolean, apTimedRequest);
 }
 
+CHIP_ERROR InvokeRequestMessage::Parser::GetDelayRequest(uint32_t * const apDelay) const
+{
+    return GetSimpleValue(to_underlying(Tag::kDelayRequest), TLV::kTLVType_UnsignedInteger, apDelay);
+}
+
 CHIP_ERROR InvokeRequestMessage::Parser::GetInvokeRequests(InvokeRequests::Parser * const apInvokeRequests) const
 {
     TLV::TLVReader reader;
@@ -135,6 +140,15 @@ InvokeRequestMessage::Builder & InvokeRequestMessage::Builder::TimedRequest(cons
     if (mError == CHIP_NO_ERROR)
     {
         mError = mpWriter->PutBoolean(TLV::ContextTag(Tag::kTimedRequest), aTimedRequest);
+    }
+    return *this;
+}
+
+InvokeRequestMessage::Builder & InvokeRequestMessage::Builder::DelayRequest(const uint32_t aDelayRequest)
+{
+    if (mError == CHIP_NO_ERROR)
+    {
+        mError = mpWriter->Put(TLV::ContextTag(Tag::kDelayRequest), aDelayRequest);
     }
     return *this;
 }
