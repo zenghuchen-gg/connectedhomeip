@@ -55,19 +55,18 @@ CHIP_ERROR GetRef(ParserT aParser, Optional<uint16_t> & aRef, bool commandRefReq
 } // namespace
 
 CommandSender::CommandSender(Callback * apCallback, Messaging::ExchangeManager * apExchangeMgr, bool aIsTimedRequest,
-                             bool aSuppressResponse, bool aAllowLargePayload) :
-    mExchangeCtx(*this),
-    mCallbackHandle(apCallback), mpExchangeMgr(apExchangeMgr), mSuppressResponse(aSuppressResponse), mTimedRequest(aIsTimedRequest),
-    mAllowLargePayload(aAllowLargePayload)
+                             bool aSuppressResponse, bool aAllowLargePayload, uint32_t aDelayRequest) :
+    mExchangeCtx(*this), mCallbackHandle(apCallback), mpExchangeMgr(apExchangeMgr), mSuppressResponse(aSuppressResponse),
+    mTimedRequest(aIsTimedRequest), mAllowLargePayload(aAllowLargePayload), mDelayRequest(aDelayRequest)
 {
     assertChipStackLockedByCurrentThread();
 }
 
 CommandSender::CommandSender(ExtendableCallback * apExtendableCallback, Messaging::ExchangeManager * apExchangeMgr,
-                             bool aIsTimedRequest, bool aSuppressResponse, bool aAllowLargePayload) :
-    mExchangeCtx(*this),
-    mCallbackHandle(apExtendableCallback), mpExchangeMgr(apExchangeMgr), mSuppressResponse(aSuppressResponse),
-    mTimedRequest(aIsTimedRequest), mUseExtendableCallback(true), mAllowLargePayload(aAllowLargePayload)
+                             bool aIsTimedRequest, bool aSuppressResponse, bool aAllowLargePayload, uint32_t aDelayRequest) :
+    mExchangeCtx(*this), mCallbackHandle(apExtendableCallback), mpExchangeMgr(apExchangeMgr), mSuppressResponse(aSuppressResponse),
+    mTimedRequest(aIsTimedRequest), mUseExtendableCallback(true), mAllowLargePayload(aAllowLargePayload),
+    mDelayRequest(aDelayRequest)
 {
     assertChipStackLockedByCurrentThread();
 #if CHIP_CONFIG_COMMAND_SENDER_BUILTIN_SUPPORT_FOR_BATCHED_COMMANDS
@@ -373,6 +372,8 @@ void CommandSender::Close()
 {
     mSuppressResponse = false;
     mTimedRequest     = false;
+    mDelayRequest     = 0;
+
     MoveToState(State::AwaitingDestruction);
     OnDoneCallback();
 }
@@ -648,6 +649,10 @@ CHIP_ERROR CommandSender::Finalize(System::PacketBufferHandle & commandPacket)
 {
     VerifyOrReturnError(mState == State::AddedCommand, CHIP_ERROR_INCORRECT_STATE);
     ReturnErrorOnFailure(mInvokeRequestBuilder.GetInvokeRequests().EndOfInvokeRequests());
+
+    mInvokeRequestBuilder.DelayRequest(mDelayRequest);
+    ReturnErrorOnFailure(mInvokeRequestBuilder.GetError());
+
     ReturnErrorOnFailure(mInvokeRequestBuilder.EndOfInvokeRequestMessage());
     return mCommandMessageWriter.Finalize(&commandPacket);
 }

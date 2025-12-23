@@ -1265,6 +1265,11 @@ void Engine::MarkDirty(const AttributePathParams & path)
     }
 }
 
+void Engine::Update(const uint32_t data)
+{
+    ChipLogError(DataManagement, "Received update requriement:%x", data);
+}
+
 } // namespace reporting
 } // namespace app
 } // namespace chip

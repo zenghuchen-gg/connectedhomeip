@@ -133,7 +133,8 @@ public:
      * transaction (i.e. was preceded by a Timed Request).  If we reach here,
      * the timer verification has already been done.
      */
-    void OnInvokeCommandRequest(Messaging::ExchangeContext * ec, System::PacketBufferHandle && payload, bool isTimedInvoke);
+    void OnInvokeCommandRequest(Messaging::ExchangeContext * ec, System::PacketBufferHandle && payload, bool isTimedInvoke,
+                                uint32_t * delay);
 
 #if CHIP_WITH_NLFAULTINJECTION
     /**

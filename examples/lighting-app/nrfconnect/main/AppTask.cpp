@@ -26,10 +26,12 @@
 
 #include <DeviceInfoProviderImpl.h>
 #include <app-common/zap-generated/attributes/Accessors.h>
+#include <app/InteractionModelEngine.h>
 #include <app/TestEventTriggerDelegate.h>
 #include <app/clusters/identify-server/identify-server.h>
 #include <app/clusters/network-commissioning/network-commissioning.h>
 #include <app/clusters/ota-requestor/OTATestEventTriggerHandler.h>
+#include <app/data-model-provider/JitterDeferredProviderChangeListener.h>
 #include <app/persistence/AttributePersistenceProviderInstance.h>
 #include <app/persistence/DefaultAttributePersistenceProvider.h>
 #include <app/persistence/DeferredAttributePersistenceProvider.h>
@@ -41,6 +43,7 @@
 #include <lib/core/ErrorStr.h>
 #include <lib/support/CHIPMem.h>
 #include <lib/support/CodeUtils.h>
+#include <platform/DefaultTimerDelegate.h>
 #include <platform/nrfconnect/FactoryResetTestEventTriggerHandler.h>
 #include <setup_payload/OnboardingCodesUtil.h>
 #include <system/SystemClock.h>
@@ -159,8 +162,10 @@ app::Clusters::NetworkCommissioning::Instance sWiFiCommissioningInstance(0, &(Ne
 CHIP_ERROR AppTask::Init()
 {
     // Initialize CHIP stack
-    LOG_INF("Init CHIP stack");
-
+    for (int i = 0; i < 10; i++)
+        LOG_INF("Init CHIP stack");
+    for (int i = 0; i < 10; i++)
+        LOG_INF("This is Jack How are you");
     CHIP_ERROR err = chip::Platform::MemoryInit();
     if (err != CHIP_NO_ERROR)
     {
@@ -274,6 +279,10 @@ CHIP_ERROR AppTask::Init()
     static SimpleTestEventTriggerDelegate sTestEventTriggerDelegate{};
     static OTATestEventTriggerHandler sOtaTestEventTriggerHandler{};
     static DeviceLayer::FactoryResetTestEventTriggerHandler sFactoryResetEventTriggerHandler{};
+    static DefaultTimerDelegate sTimerDelegate;
+    static chip::app::DataModel::JitterDeferredProviderChangeListener sJitterDeferredProviderChangeListener(
+        &chip::app::InteractionModelEngine::GetInstance()->GetReportingEngine(), sTimerDelegate, 0, 0);
+
     VerifyOrDie(sTestEventTriggerDelegate.Init(ByteSpan(sTestEventTriggerEnableKey)) == CHIP_NO_ERROR);
     VerifyOrDie(sTestEventTriggerDelegate.AddHandler(&sOtaTestEventTriggerHandler) == CHIP_NO_ERROR);
     VerifyOrDie(sTestEventTriggerDelegate.AddHandler(&sFactoryResetEventTriggerHandler) == CHIP_NO_ERROR);
@@ -284,8 +293,9 @@ CHIP_ERROR AppTask::Init()
     (void) initParams.InitializeStaticResourcesBeforeServerInit();
     VerifyOrDie(gSimpleAttributePersistence.Init(initParams.persistentStorageDelegate) == CHIP_NO_ERROR);
 
-    initParams.dataModelProvider        = CodegenDataModelProviderInstance(initParams.persistentStorageDelegate);
-    initParams.testEventTriggerDelegate = &sTestEventTriggerDelegate;
+    initParams.dataModelProvider              = CodegenDataModelProviderInstance(initParams.persistentStorageDelegate);
+    initParams.testEventTriggerDelegate       = &sTestEventTriggerDelegate;
+    initParams.dataModelProviderChangeListner = &sJitterDeferredProviderChangeListener;
     ReturnErrorOnFailure(chip::Server::GetInstance().Init(initParams));
     AppFabricTableDelegate::Init();
 

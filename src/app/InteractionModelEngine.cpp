@@ -605,7 +605,11 @@ Status InteractionModelEngine::OnInvokeCommandRequest(Messaging::ExchangeContext
         commandResponder->TestOnlyInvokeCommandRequestWithFaultsInjected(
             apExchangeContext, std::move(aPayload), aIsTimedInvoke, CommandHandlerImpl::NlFaultInjectionType::SkipSecondResponse);
         return Status::Success;);
-    commandResponder->OnInvokeCommandRequest(apExchangeContext, std::move(aPayload), aIsTimedInvoke);
+    uint32_t delay;
+    commandResponder->OnInvokeCommandRequest(apExchangeContext, std::move(aPayload), aIsTimedInvoke, &delay);
+    // ChipLogError(InteractionModel, "The delay recevied %x", delay);
+    mDataModelProvider->Update(delay);
+
     return Status::Success;
 }
 
@@ -1909,7 +1913,7 @@ Protocols::InteractionModel::Status InteractionModelEngine::CheckCommandExistenc
     return DataModel::ValidateClusterPath(provider, aCommandPath, Protocols::InteractionModel::Status::UnsupportedCommand);
 }
 
-DataModel::Provider * InteractionModelEngine::SetDataModelProvider(DataModel::Provider * model)
+DataModel::Provider * InteractionModelEngine::Startup(DataModel::Provider * model, DataModel::ProviderChangeListener * listener)
 {
     // Altering data model should not be done while IM is actively handling requests.
     VerifyOrDie(mReadHandlers.begin() == mReadHandlers.end());
@@ -1935,7 +1939,7 @@ DataModel::Provider * InteractionModelEngine::SetDataModelProvider(DataModel::Pr
     {
         CHIP_ERROR err = mDataModelProvider->Startup({
             .eventsGenerator         = EventManagement::GetInstance(),
-            .dataModelChangeListener = mReportingEngine,
+            .dataModelChangeListener = (listener == nullptr) ? mReportingEngine : *listener,
             .actionContext           = *this,
         });
         if (err != CHIP_NO_ERROR)

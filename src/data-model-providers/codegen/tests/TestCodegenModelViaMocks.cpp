@@ -167,6 +167,7 @@ public:
 
     std::vector<AttributePathParams> & DirtyList() { return mDirtyList; }
     const std::vector<AttributePathParams> & DirtyList() const { return mDirtyList; }
+    void Update(const uint32_t delay) override { return; }
 
 private:
     std::vector<AttributePathParams> mDirtyList;

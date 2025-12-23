@@ -64,6 +64,7 @@ public:
 
     /// Generic model implementations
     CHIP_ERROR Startup(DataModel::InteractionModelContext context) override;
+    virtual CHIP_ERROR Update(const uint32_t data) override;
     CHIP_ERROR Shutdown() override;
 
     DataModel::ActionReturnStatus ReadAttribute(const DataModel::ReadAttributeRequest & request,
@@ -91,6 +92,12 @@ public:
     CHIP_ERROR Attributes(const ConcreteClusterPath & path, ReadOnlyBufferBuilder<DataModel::AttributeEntry> & builder) override;
 
     void Temporary_ReportAttributeChanged(const AttributePathParams & path) override;
+
+    /// Gets the ProviderChangeListener associated with the current InteractionModelContext.
+    /// Return a pointer to the ProviderChangeListener if the context has been initialized (e.g., after Startup has been called),
+    /// otherwise returns nullptr.
+    /// Callers MUST check for nullptr before dereferencing the returned pointer.
+    DataModel::ProviderChangeListener * GetProviderChangeListener();
 
 protected:
     // Temporary hack for a test: Initializes the data model for testing purposes only.
