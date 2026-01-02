@@ -35,7 +35,7 @@ import matter.clusters as Clusters
 from matter.exceptions import ChipStackError
 from matter.interaction_model import InteractionModelError, Status
 from matter.testing.matter_testing import (AttributeValue, MatterBaseTest,
-                                         TestStep, default_matter_test_main, has_command, run_if_endpoint_matches, async_test_body)
+                                           TestStep, default_matter_test_main, has_command, run_if_endpoint_matches, async_test_body)
 from matter.clusters import ClusterObjects as ClusterObjects
 from matter.clusters.Attribute import EventReadResult, SubscriptionTransaction, TypedAttributePath, AttributePath
 
@@ -51,30 +51,37 @@ SELECTED_SINGLE_NODE = None
 
 # To match src/lib/support/TestGroupData.h:InitData
 DEFAULT_GROUP_ID = 0x0103
-DEFAULT_GROUP_EPOCH_KEY = bytes(bytearray([0xd1, 0xd1, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6, 0xd7, 0xd8, 0xd9, 0xda, 0xdb, 0xdc, 0xdd, 0xde, 0xdf]))
+DEFAULT_GROUP_EPOCH_KEY = bytes(bytearray([0xd1, 0xd1, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6,
+                                0xd7, 0xd8, 0xd9, 0xda, 0xdb, 0xdc, 0xdd, 0xde, 0xdf]))
+
 
 class MonitoringEvent:
     pass
+
 
 @dataclass
 class CaseConnectionEvent(MonitoringEvent):
     node_id: int
     timestamp: float
 
+
 @dataclass
 class SessionFailedEvent(MonitoringEvent):
     node_id: int
     timestamp: float
+
 
 @dataclass
 class SubscriptionEstablishedEvent(MonitoringEvent):
     node_id: int
     timestamp: float
 
+
 @dataclass
 class ResubscriptionAttemptedEvent(MonitoringEvent):
     node_id: int
     timestamp: float
+
 
 @dataclass
 class SubscriptionErrorEvent(MonitoringEvent):
@@ -82,15 +89,18 @@ class SubscriptionErrorEvent(MonitoringEvent):
     timestamp: float
     error: int
 
+
 @dataclass
 class SubscriptionReportBeginEvent(MonitoringEvent):
     node_id: int
     timestamp: float
 
+
 @dataclass
 class SubscriptionReportEndEvent(MonitoringEvent):
     node_id: int
     timestamp: float
+
 
 @dataclass
 class SubscriptionDataEvent(MonitoringEvent):
@@ -100,22 +110,28 @@ class SubscriptionDataEvent(MonitoringEvent):
     value: Any
     # TODO: Add data
 
+
 @dataclass
 class ShutdownEvent(MonitoringEvent):
     pass
 
 # For subscribing to nodes
+
+
 @dataclass
 class RequestNodeIdSubcribeEvent(MonitoringEvent):
     node_id: int
+
 
 @dataclass
 class CommandFromWebEvent(MonitoringEvent):
     data: dict
 
+
 @dataclass
 class LogLineEvent(MonitoringEvent):
     lines: list[str]
+
 
 class MonitoringEventHandler:
     def on_event(self, event: MonitoringEvent):
@@ -124,18 +140,19 @@ class MonitoringEventHandler:
 
 class AttributeSubscriptionHandler:
     """Handle a subscription to a whole node."""
+
     def __init__(self, handler: MonitoringEventHandler):
         self._subscription = None
         self._handler = handler
         self._lock = threading.Lock()
         self._node_id: Optional[int] = None
 
-    async def start(self, dev_ctrl, node_id: int, fabric_filtered: bool = True, min_interval_sec: int = 1, max_interval_sec: int = 120) -> Any:
+    async def start(self, dev_ctrl, node_id: int, fabric_filtered: bool = True, min_interval_sec: int = 1, max_interval_sec: int = 100) -> Any:
         """This starts a wildcard subscription for attributes on the specified node_id."""
         self._node_id = node_id
         try:
             self._subscription = await dev_ctrl.ReadAttribute(
-                nodeid=node_id,
+                nodeId=node_id,
                 attributes=[()],
                 reportInterval=(int(min_interval_sec), int(max_interval_sec)),
                 fabricFiltered=fabric_filtered,
@@ -179,7 +196,7 @@ class AttributeSubscriptionHandler:
 
         data = transaction.GetAttribute(path)
         value = AttributeValue(endpoint_id=path.Path.EndpointId, attribute=path.AttributeType,
-                                value=data, timestamp_utc=datetime.now(timezone.utc))
+                               value=data, timestamp_utc=datetime.now(timezone.utc))
         # logging.info(f"[AttributeSubscriptionHandler] Received attribute report: {path.AttributeType} = {data}")
         with self._lock:
             self._handler.on_event(SubscriptionDataEvent(node_id=self._node_id, timestamp=time.time(), path=path, value=value))
@@ -208,6 +225,7 @@ class AttributeSubscriptionHandler:
     def subscription(self):
         return self._subscription
 
+
 @dataclass
 class SubscriptionAttemptCompleteEvent(MonitoringEvent):
     node_id: int
@@ -215,16 +233,19 @@ class SubscriptionAttemptCompleteEvent(MonitoringEvent):
     result: Optional[tuple[Any, AttributeSubscriptionHandler]]
     exception: Optional[Exception] = None
 
+
 @dataclass
 class OnboardedNode:
     name: str
     node_id: int
+
 
 @dataclass
 class LightEndpoint:
     name: str
     node_id: int
     endpoint_id: int
+
 
 @dataclass
 class SwitchEndpoint:
@@ -325,28 +346,33 @@ class DeviceConfigRepository:
         endpoints.extend([endpoint for endpoint in self.switch_endpoints if endpoint.node_id == node_id])
         return endpoints
 
-    def get_all_light_endpoints(self, node_id: Optional[int]=None) -> list[LightEndpoint]:
+    def get_all_light_endpoints(self, node_id: Optional[int] = None) -> list[LightEndpoint]:
         endpoints = []
         for node in self.nodes:
             if node_id is not None:
-                if node.node_id != node_id: continue
-            endpoints.extend([endpoint for endpoint in self.get_endpoints_for_node(node.node_id) if isinstance(endpoint, LightEndpoint)])
+                if node.node_id != node_id:
+                    continue
+            endpoints.extend([endpoint for endpoint in self.get_endpoints_for_node(
+                node.node_id) if isinstance(endpoint, LightEndpoint)])
         return endpoints
 
-    def get_all_switch_endpoints(self, node_id: Optional[int]=None) -> list[SwitchEndpoint]:
+    def get_all_switch_endpoints(self, node_id: Optional[int] = None) -> list[SwitchEndpoint]:
         endpoints = []
         for node in self.nodes:
             if node_id is not None:
-                if node.node_id != node_id: continue
-            endpoints.extend([endpoint for endpoint in self.get_endpoints_for_node(node.node_id) if isinstance(endpoint, SwitchEndpoint)])
+                if node.node_id != node_id:
+                    continue
+            endpoints.extend([endpoint for endpoint in self.get_endpoints_for_node(
+                node.node_id) if isinstance(endpoint, SwitchEndpoint)])
         return endpoints
 
 
 async def read_single_attribute(
-            dev_ctrl: ChipDeviceCtrl.ChipDeviceController, node_id: int, endpoint: int, attribute: object, fabricFiltered: bool = True) -> object:
-        result = await dev_ctrl.ReadAttribute(node_id, [(endpoint, attribute)], fabricFiltered=fabricFiltered)
-        data = result[endpoint]
-        return list(data.values())[0][attribute]
+        dev_ctrl: ChipDeviceCtrl.ChipDeviceController, node_id: int, endpoint: int, attribute: object, fabricFiltered: bool = True) -> object:
+    result = await dev_ctrl.ReadAttribute(node_id, [(endpoint, attribute)], fabricFiltered=fabricFiltered)
+    data = result[endpoint]
+    return list(data.values())[0][attribute]
+
 
 async def write_single_attribute(dev_ctrl: ChipDeviceCtrl.ChipDeviceController, node_id: int, endpoint_id: int, attribute_value: object) -> Status:
     write_result = await dev_ctrl.WriteAttribute(node_id, [(endpoint_id, attribute_value)])
@@ -354,7 +380,7 @@ async def write_single_attribute(dev_ctrl: ChipDeviceCtrl.ChipDeviceController, 
 
 
 class GroupManager:
-    def __init__(self, dev_ctrl: ChipDeviceCtrl.ChipDeviceController, admin_node_id:int=DEFAULT_ADMIN_NODE_ID):
+    def __init__(self, dev_ctrl: ChipDeviceCtrl.ChipDeviceController, admin_node_id: int = DEFAULT_ADMIN_NODE_ID):
         self._dev_ctrl = dev_ctrl
         self._admin_node_id = admin_node_id
 
@@ -362,13 +388,13 @@ class GroupManager:
         # WE ALWAYS ONLY USE KEY ID 1
 
         group_key_set = Clusters.GroupKeyManagement.Structs.GroupKeySetStruct(groupKeySetID=DEFAULT_GROUP_KEY_SET_ID, groupKeySecurityPolicy=0,
-            epochKey0=DEFAULT_GROUP_EPOCH_KEY,
-            epochStartTime0=1
-        )
+                                                                              epochKey0=DEFAULT_GROUP_EPOCH_KEY,
+                                                                              epochStartTime0=1
+                                                                              )
 
         key_set_write = Clusters.GroupKeyManagement.Commands.KeySetWrite(group_key_set)
         logging.info(f"Command: {key_set_write}")
-        await self._dev_ctrl.SendCommand(nodeid=node_id, endpoint=0, payload=key_set_write)
+        await self._dev_ctrl.SendCommand(nodeId=node_id, endpoint=0, payload=key_set_write)
 
     async def ensure_groups_have_access(self, node_id: int, group_ids: list[int]):
         # WE ALWAYS ONLY USE KEY ID 1
@@ -377,11 +403,11 @@ class GroupManager:
 
         group_key_map_attrib = Clusters.GroupKeyManagement.Attributes.GroupKeyMap
 
-        group_key_map = await read_single_attribute(dev_ctrl=self._dev_ctrl, node_id = node_id, endpoint=0, attribute=group_key_map_attrib)
+        group_key_map = await read_single_attribute(dev_ctrl=self._dev_ctrl, node_id=node_id, endpoint=0, attribute=group_key_map_attrib)
         # logging.info(f"Group Key Map from 0x{node_id:016X}: {group_key_map} BEFORE UPDATE")
 
         acl_attrib = acl_cluster.Attributes.Acl
-        acl = await read_single_attribute(dev_ctrl=self._dev_ctrl, node_id = node_id, endpoint=0, attribute=acl_attrib)
+        acl = await read_single_attribute(dev_ctrl=self._dev_ctrl, node_id=node_id, endpoint=0, attribute=acl_attrib)
         logging.info(f"ACL: {acl}")
 
         # Set group key maps for all groups needed where it's missing
@@ -407,10 +433,10 @@ class GroupManager:
             del new_acl[idx]
 
         group_acl_entry = acl_cluster.Structs.AccessControlEntryStruct(
-            privilege = acl_cluster.Enums.AccessControlEntryPrivilegeEnum.kOperate,
-            authMode = acl_cluster.Enums.AccessControlEntryAuthModeEnum.kGroup,
-            subjects = group_ids,
-            targets = [] # All endpoints!
+            privilege=acl_cluster.Enums.AccessControlEntryPrivilegeEnum.kOperate,
+            authMode=acl_cluster.Enums.AccessControlEntryAuthModeEnum.kGroup,
+            subjects=group_ids,
+            targets=[]  # All endpoints!
         )
         new_acl.append(group_acl_entry)
 
@@ -420,18 +446,17 @@ class GroupManager:
         groups = Clusters.Groups
         for group_id in group_ids:
             join_group = groups.Commands.AddGroup(group_id)
-            await self._dev_ctrl.SendCommand(nodeid=node_id, endpoint=endpoint_id, payload=join_group)
+            await self._dev_ctrl.SendCommand(nodeId=node_id, endpoint=endpoint_id, payload=join_group)
 
     async def dump_groups(self, node_id: int):
         group_key_map_attrib = Clusters.GroupKeyManagement.Attributes.GroupKeyMap
         group_table_attrib = Clusters.GroupKeyManagement.Attributes.GroupTable
 
-        group_table = await read_single_attribute(dev_ctrl=self._dev_ctrl, node_id = node_id, endpoint=0, attribute=group_table_attrib)
+        group_table = await read_single_attribute(dev_ctrl=self._dev_ctrl, node_id=node_id, endpoint=0, attribute=group_table_attrib)
         logging.info(f"Group Table from 0x{node_id:016X}: {group_table}")
 
-        group_key_map = await read_single_attribute(dev_ctrl=self._dev_ctrl, node_id = node_id, endpoint=0, attribute=group_key_map_attrib)
+        group_key_map = await read_single_attribute(dev_ctrl=self._dev_ctrl, node_id=node_id, endpoint=0, attribute=group_key_map_attrib)
         logging.info(f"Group Key Map from 0x{node_id:016X}: {group_key_map} AFTER UPDATE")
-
 
 
 class LifecycleState(enum.IntEnum):
@@ -440,6 +465,7 @@ class LifecycleState(enum.IntEnum):
     SUBSCRIBING = 2
     SUBSCRIBED = 3
     PENDING_RETRY = 4
+
 
 @dataclass
 class MonitoredNode:
@@ -450,7 +476,6 @@ class MonitoredNode:
     attribute_subscription: Optional[AttributeSubscriptionHandler]
     last_error: Optional[int] = None
     # TODO: Add subscription data cache
-
 
 
 class SwitchDemoHandler:
@@ -476,9 +501,11 @@ class DeviceSubscriber:
         self._switch_demo_handler = switch_demo_handler
 
         if SELECTED_SINGLE_NODE is not None:
-            self._monitored_nodes: dict[int, MonitoredNode] = {node.node_id: MonitoredNode(name=node.name, node_id=node.node_id, state=LifecycleState.UNSUBSCRIBED, last_attempt_timestamp=0.0, attribute_subscription=None) for node in self._device_repository.nodes if node.node_id == SELECTED_SINGLE_NODE }
+            self._monitored_nodes: dict[int, MonitoredNode] = {node.node_id: MonitoredNode(
+                name=node.name, node_id=node.node_id, state=LifecycleState.UNSUBSCRIBED, last_attempt_timestamp=0.0, attribute_subscription=None) for node in self._device_repository.nodes if node.node_id == SELECTED_SINGLE_NODE}
         else:
-            self._monitored_nodes: dict[int, MonitoredNode] = {node.node_id: MonitoredNode(name=node.name, node_id=node.node_id, state=LifecycleState.UNSUBSCRIBED, last_attempt_timestamp=0.0, attribute_subscription=None) for node in self._device_repository.nodes }
+            self._monitored_nodes: dict[int, MonitoredNode] = {node.node_id: MonitoredNode(
+                name=node.name, node_id=node.node_id, state=LifecycleState.UNSUBSCRIBED, last_attempt_timestamp=0.0, attribute_subscription=None) for node in self._device_repository.nodes}
 
         self._last_subscribe_attempt_time = 0.0
         self._current_node_ids_attempted: set[int] = set()
@@ -622,7 +649,6 @@ class DeviceSubscriber:
                 device_state_db[endpoint.name] = endpoint_data
 
         await self._publish_update({"type": "FULL_STATE_SYNC", "payload": {"devices": device_state_db}})
-
 
     def on_event(self, event: MonitoringEvent):
         self._event_q.put(event, block=True)
@@ -800,21 +826,23 @@ class WebCommandHandler:
                 if action_name == "TURN_ON":
                     logging.info(f"Turning 0x{node_id:016X}.{endpoint_id:X} On")
                     cmd = Clusters.OnOff.Commands.On()
-                    await self._dev_ctrl.SendCommand(nodeid=node_id, endpoint=endpoint_id, payload=cmd)
+                    await self._dev_ctrl.SendCommand(nodeId=node_id, endpoint=endpoint_id, payload=cmd)
                 elif action_name == "TURN_OFF":
                     logging.info(f"Turning 0x{node_id:016X}.{endpoint_id:X} Off")
                     cmd = Clusters.OnOff.Commands.Off()
-                    await self._dev_ctrl.SendCommand(nodeid=node_id, endpoint=endpoint_id, payload=cmd)
+                    await self._dev_ctrl.SendCommand(nodeId=node_id, endpoint=endpoint_id, payload=cmd)
                 elif action_name == "TOGGLE":
                     logging.info(f"Toggling 0x{node_id:016X}.{endpoint_id:X}")
                     cmd = Clusters.OnOff.Commands.Toggle()
-                    await self._dev_ctrl.SendCommand(nodeid=node_id, endpoint=endpoint_id, payload=cmd)
+                    await self._dev_ctrl.SendCommand(nodeId=node_id, endpoint=endpoint_id, payload=cmd)
                 elif action_name == "MOVE_TO_LEVEL":
-                    logging.info(f"Moving to level 0x{node_id:016X}.{endpoint_id:X} to {level} over transition time {transition_time}")
+                    logging.info(
+                        f"Moving to level 0x{node_id:016X}.{endpoint_id:X} to {level} over transition time {transition_time}")
 
                     EXECUTE_IF_OFF = Clusters.LevelControl.Bitmaps.OptionsBitmap.kExecuteIfOff
-                    cmd = Clusters.LevelControl.Commands.MoveToLevel(level=level, transitionTime=transition_time, optionsMask=EXECUTE_IF_OFF, optionsOverride=EXECUTE_IF_OFF)
-                    await self._dev_ctrl.SendCommand(nodeid=node_id, endpoint=endpoint_id, payload=cmd)
+                    cmd = Clusters.LevelControl.Commands.MoveToLevel(
+                        level=level, transitionTime=transition_time, optionsMask=EXECUTE_IF_OFF, optionsOverride=EXECUTE_IF_OFF)
+                    await self._dev_ctrl.SendCommand(nodeId=node_id, endpoint=endpoint_id, payload=cmd)
                 elif action_name == "SETUP_KEY1":
                     logging.info(f"Setup Key1 from 0x{node_id:016X}.{endpoint_id:X}")
                     await self._group_manager.setup_key1(node_id)
@@ -830,11 +858,13 @@ class WebCommandHandler:
             pass
         elif type == "ALL_BRIGHT_GROUP":
             EXECUTE_IF_OFF = Clusters.LevelControl.Bitmaps.OptionsBitmap.kExecuteIfOff
-            cmd = Clusters.LevelControl.Commands.MoveToLevel(level=level, transitionTime=transition_time, optionsMask=EXECUTE_IF_OFF, optionsOverride=EXECUTE_IF_OFF)
+            cmd = Clusters.LevelControl.Commands.MoveToLevel(
+                level=level, transitionTime=transition_time, optionsMask=EXECUTE_IF_OFF, optionsOverride=EXECUTE_IF_OFF)
             self._dev_ctrl.SendGroupCommand(groupid=DEFAULT_GROUP_ID, payload=cmd)
         elif type == "ALL_DIM_GROUP":
             EXECUTE_IF_OFF = Clusters.LevelControl.Bitmaps.OptionsBitmap.kExecuteIfOff
-            cmd = Clusters.LevelControl.Commands.MoveToLevel(level=1, transitionTime=transition_time, optionsMask=EXECUTE_IF_OFF, optionsOverride=EXECUTE_IF_OFF)
+            cmd = Clusters.LevelControl.Commands.MoveToLevel(
+                level=1, transitionTime=transition_time, optionsMask=EXECUTE_IF_OFF, optionsOverride=EXECUTE_IF_OFF)
             self._dev_ctrl.SendGroupCommand(groupid=DEFAULT_GROUP_ID, payload=cmd)
         elif type == "ALL_ON_GROUP":
             cmd = Clusters.OnOff.Commands.On()
@@ -845,7 +875,8 @@ class WebCommandHandler:
         elif type == "ALL_SETUP_GROUP":
             for node_id in self._device_subscriber.get_all_subscribed_node_ids():
                 try:
-                    light_endpoint_ids = [endpoint.endpoint_id for endpoint in self._config_repository.get_all_light_endpoints(node_id=node_id)]
+                    light_endpoint_ids = [
+                        endpoint.endpoint_id for endpoint in self._config_repository.get_all_light_endpoints(node_id=node_id)]
 
                     logging.info(f"Setup group on endpoints {light_endpoint_ids} for 0x{node_id:016X}")
 
@@ -858,6 +889,7 @@ class WebCommandHandler:
                     logging.exception("Group setup error!!!")
         elif type == "ALL_DIM_GROUP":
             pass
+
 
 class GroupManagerExperiment(MatterBaseTest):
     def __init__(self, *args, **kwargs):
@@ -909,9 +941,9 @@ class GroupManagerExperiment(MatterBaseTest):
 
         write_result = await dev_ctrl.WriteAttribute(node_id, [(endpoint_id, attribute_value)])
         asserts.assert_equal(write_result[0].Status, Status.Success,
-                              f"Expected write success for write to attribute {attribute_value} on endpoint {endpoint_id}")
+                             f"Expected write success for write to attribute {attribute_value} on endpoint {endpoint_id}")
 
-    async def read_node_label_if_present(self, node_id:int, endpoint_id: int) -> str:
+    async def read_node_label_if_present(self, node_id: int, endpoint_id: int) -> str:
         descriptor = Clusters.Descriptor
         server_list = await self.read_single_attribute_check_success(cluster=descriptor, node_id=node_id, endpoint=endpoint_id, attribute=descriptor.Attributes.ServerList)
 
@@ -930,19 +962,19 @@ class GroupManagerExperiment(MatterBaseTest):
         device_type_ids = set([dt.deviceType for dt in device_types])
 
         light_likes = set([
-            256, # On/Off Light
-            257, # Dimmable Light
-            259, # On/Off Light Switch
-            260, # Dimmer Switch
-            261, # Color Dimmer Switch
-            262, # Light Sensor
-            263, # Occupancy Sensor
-            266, # On/Off Plug-in Unit
-            267, # Dimmable Plug-In Unit
-            268, # Color Temperature Light
-            269, # Extended Color Light
-            271, # Mounted On/Off Control
-            272, # Mounted Dimmable Load Control
+            256,  # On/Off Light
+            257,  # Dimmable Light
+            259,  # On/Off Light Switch
+            260,  # Dimmer Switch
+            261,  # Color Dimmer Switch
+            262,  # Light Sensor
+            263,  # Occupancy Sensor
+            266,  # On/Off Plug-in Unit
+            267,  # Dimmable Plug-In Unit
+            268,  # Color Temperature Light
+            269,  # Extended Color Light
+            271,  # Mounted On/Off Control
+            272,  # Mounted Dimmable Load Control
         ])
 
         return len(device_type_ids.intersection(light_likes)) > 0
@@ -951,19 +983,19 @@ class GroupManagerExperiment(MatterBaseTest):
         device_type_ids = set([dt.deviceType for dt in device_types])
 
         switch_types = set([
-            0xF # Generic switch
+            0xF  # Generic switch
         ])
 
         return len(device_type_ids.intersection(switch_types)) > 0
 
-    async def invoke_unicast_on_all_lights(self, command, predicate=lambda x: True, max_parallel:int =10000):
+    async def invoke_unicast_on_all_lights(self, command, predicate=lambda x: True, max_parallel: int = 10000):
         candidates = [light for light in self._device_repository.light_endpoints if predicate(light)]
 
         results = []
         tasks = []
         while candidates:
             target = candidates.pop(0)
-            task = self.send_single_cmd(cmd=command, node_id = target.node_id, endpoint=target.endpoint_id)
+            task = self.send_single_cmd(cmd=command, node_id=target.node_id, endpoint=target.endpoint_id)
             tasks.append(task)
 
             if len(tasks) >= max_parallel:
@@ -984,7 +1016,7 @@ class GroupManagerExperiment(MatterBaseTest):
         asserts.assert_in("node_name", self.user_params, "Need to provide --string-arg node_name:XXXX")
         asserts.assert_in("device_name", self.user_params, "Need to provide --string-arg device_name:XXXX")
         node_name = self.user_params["node_name"]
-        #device_name = self.user_params["device_name"]
+        # device_name = self.user_params["device_name"]
 
         if not self._device_repository.has_node(self.dut_node_id):
             self._device_repository.add_node(node_name, self.dut_node_id)
@@ -1042,7 +1074,6 @@ class GroupManagerExperiment(MatterBaseTest):
                     self._device_repository.add_switch(name=switch_name, node_id=self.dut_node_id, endpoint_id=endpoint_id)
                     logging.info(f"->    Added light endpoint EP{endpoint_id} with name {switch_name}")
 
-
     @async_test_body
     async def test_BlinkAllLights(self):
         self.configure_devices()
@@ -1053,7 +1084,7 @@ class GroupManagerExperiment(MatterBaseTest):
         for _ in range(10):
             await self.invoke_unicast_on_all_lights(onoff.Commands.On(), predicate=light_matcher, max_parallel=8)
             time.sleep(1.0)
-            await self.invoke_unicast_on_all_lights(onoff.Commands.Off() , predicate=light_matcher, max_parallel=8)
+            await self.invoke_unicast_on_all_lights(onoff.Commands.Off(), predicate=light_matcher, max_parallel=8)
             time.sleep(1.0)
 
     @async_test_body
@@ -1091,8 +1122,8 @@ class GroupManagerExperiment(MatterBaseTest):
 
         single_node = self.user_params.get("single_node")
         if single_node:
-          global SELECTED_SINGLE_NODE
-          SELECTED_SINGLE_NODE = single_node
+            global SELECTED_SINGLE_NODE
+            SELECTED_SINGLE_NODE = single_node
 
         self.configure_devices()
 
@@ -1106,9 +1137,11 @@ class GroupManagerExperiment(MatterBaseTest):
         dev_ctrl.InitGroupTestingData()
 
         switch_demo_handler = SwitchDemoHandler(dev_ctrl, self._device_repository)
-        subscriber = DeviceSubscriber(config_repository=self._device_repository, dev_ctrl=dev_ctrl, publish_update_callback=publish_update, switch_demo_handler=switch_demo_handler)
+        subscriber = DeviceSubscriber(config_repository=self._device_repository, dev_ctrl=dev_ctrl,
+                                      publish_update_callback=publish_update, switch_demo_handler=switch_demo_handler)
         group_manager = GroupManager(dev_ctrl)
-        web_command_handler = WebCommandHandler(dev_ctrl=dev_ctrl, device_subscriber=subscriber, group_manager=group_manager, config_repository=self._device_repository, publish_update_callback=publish_update)
+        web_command_handler = WebCommandHandler(dev_ctrl=dev_ctrl, device_subscriber=subscriber, group_manager=group_manager,
+                                                config_repository=self._device_repository, publish_update_callback=publish_update)
 
         set_json_handler(web_command_handler.on_command_from_web)
 
