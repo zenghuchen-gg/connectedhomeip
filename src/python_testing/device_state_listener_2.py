@@ -25,7 +25,6 @@ import matter.clusters as Clusters
 from matter.clusters import ClusterObjects as ClusterObjects
 from matter.clusters.Attribute import EventReadResult, SubscriptionTransaction, TypedAttributePath
 from matter.interaction_model import Status
-
 from matter.testing.matter_testing import MatterBaseTest
 from matter.testing.decorators import async_test_body
 from matter.testing.runner import TestStep, default_matter_test_main
