@@ -70,6 +70,11 @@ private:
     //
     // ReadClient::Callback
     //
+    // (b/504587111)
+    void OnReportReceived(const ReadClient & apReadClient, ByteSpan aReportPayload) override
+    {
+        mCallback.OnReportReceived(apReadClient, aReportPayload);
+    }   
     void OnReportBegin() override;
     void OnReportEnd() override;
     void OnAttributeData(const ConcreteDataAttributePath & aPath, TLV::TLVReader * apData, const StatusIB & aStatus) override;
