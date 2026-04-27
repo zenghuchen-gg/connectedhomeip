@@ -20,7 +20,6 @@ import json
 import logging
 import sys
 import time
-import asyncio
 
 import matter.clusters as Clusters
 from matter.clusters import ClusterObjects as ClusterObjects
@@ -36,10 +35,6 @@ TEXT_LOG_FILE = None
 
 
 class DeviceStateListenerTool(MatterBaseTest):
-    @property
-    def default_timeout(self) -> int:
-        return 2**63  # Effectively infinite timeout
-
     def steps_DeviceStateListener(self) -> list[TestStep]:
         steps = [TestStep(1, "Commissioning, already done", is_commissioning=True),
                  TestStep(2, "Listen to device activity"),
@@ -117,7 +112,7 @@ class DeviceStateListenerTool(MatterBaseTest):
         urgent = True
         sub = await dev_ctrl.Read(self.dut_node_id, attributes=[("*")],
                                   events=[("*", urgent)],
-                                  reportInterval=(1, 3600),
+                                  reportInterval=(0, 30),
                                   fabricFiltered=True, keepSubscriptions=True, autoResubscribe=True)
         sub.SetEventUpdateCallback(event_callback)
         sub.SetAttributeUpdateCallback(attribute_callback)
@@ -159,21 +154,8 @@ class DeviceStateListenerTool(MatterBaseTest):
                         f.write(f"  {cluster_name} - Event {event_name} (Num: {event_result.Header.EventNumber}): {event_result.Data}\n")
             logging.info(f"Data model dump saved to {DM_DUMP_FILE}")
 
-        async def keep_session_alive():
-            """Periodically ping the device to keep the secure session alive without draining battery."""
-            while True:
-                await asyncio.sleep(50)
-                try:
-                    # Read a lightweight attribute to refresh the session timers
-                    await dev_ctrl.ReadAttribute(self.dut_node_id, [(0, Clusters.BasicInformation.Attributes.VendorID)])
-                except Exception as e:
-                    logging.debug(f"Keep-alive ping failed: {e}")
-
-        # Start the background ping task
-        keep_alive_task = asyncio.create_task(keep_session_alive())
-
         while True:
-            await asyncio.sleep(0.1)
+            time.sleep(0.1)
 
         return
 
