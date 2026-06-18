@@ -66,6 +66,7 @@ struct __attribute__((packed)) DataVersionFilter
     chip::DataVersion dataVersion;
 };
 
+using OnReadRawReportCallback           = void (*)(PyObject * appContext, uint8_t * data, size_t dataLen);
 using OnReadAttributeDataCallback       = void (*)(PyObject * appContext, chip::DataVersion version, chip::EndpointId endpointId,
                                              chip::ClusterId clusterId, chip::AttributeId attributeId,
                                              std::underlying_type_t<Protocols::InteractionModel::Status> imstatus, uint8_t * data,
@@ -82,6 +83,7 @@ using OnReadDoneCallback                = void (*)(PyObject * appContext);
 using OnReportBeginCallback             = void (*)(PyObject * appContext);
 using OnReportEndCallback               = void (*)(PyObject * appContext);
 
+OnReadRawReportCallback gOnReadRawReportCallback                     = nullptr;
 OnReadAttributeDataCallback gOnReadAttributeDataCallback             = nullptr;
 OnReadEventDataCallback gOnReadEventDataCallback                     = nullptr;
 OnSubscriptionEstablishedCallback gOnSubscriptionEstablishedCallback = nullptr;
@@ -151,6 +153,13 @@ public:
         // Only enable auto resubscribe if the subscription is established successfully.
         mAutoResubscribeNeeded = mAutoResubscribe;
         gOnSubscriptionEstablishedCallback(mAppContext, aSubscriptionId);
+    }
+
+    void OnReportReceived(const ReadClient & apReadClient, ByteSpan aReportPayload) override
+    {
+        if (gOnReadRawReportCallback != nullptr) {
+            gOnReadRawReportCallback(mAppContext, const_cast<uint8_t *>(aReportPayload.data()), aReportPayload.size());
+        }
     }
 
     CHIP_ERROR OnResubscriptionNeeded(ReadClient * apReadClient, CHIP_ERROR aTerminationCause) override
@@ -375,13 +384,15 @@ void pychip_WriteClient_InitCallbacks(OnWriteResponseCallback onWriteResponseCal
     gOnWriteDoneCallback     = onWriteDoneCallback;
 }
 
-void pychip_ReadClient_InitCallbacks(OnReadAttributeDataCallback onReadAttributeDataCallback,
+void pychip_ReadClient_InitCallbacks(OnReadRawReportCallback OnReadRawReportCallback,
+                                     OnReadAttributeDataCallback onReadAttributeDataCallback,
                                      OnReadEventDataCallback onReadEventDataCallback,
                                      OnSubscriptionEstablishedCallback onSubscriptionEstablishedCallback,
                                      OnResubscriptionAttemptedCallback onResubscriptionAttemptedCallback,
                                      OnReadErrorCallback onReadErrorCallback, OnReadDoneCallback onReadDoneCallback,
                                      OnReportBeginCallback onReportBeginCallback, OnReportEndCallback onReportEndCallback)
 {
+    gOnReadRawReportCallback           = OnReadRawReportCallback;
     gOnReadAttributeDataCallback       = onReadAttributeDataCallback;
     gOnReadEventDataCallback           = onReadEventDataCallback;
     gOnSubscriptionEstablishedCallback = onSubscriptionEstablishedCallback;

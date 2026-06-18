@@ -621,6 +621,13 @@ CHIP_ERROR ReadClient::ProcessReportData(System::PacketBufferHandle && aPayload,
     EventReportIBs::Parser eventReportIBs;
     AttributeReportIBs::Parser attributeReportIBs;
     System::PacketBufferTLVReader reader;
+
+    // (b/504587111) pass the raw TLV data before processing
+    if (!aPayload.IsNull())
+    {
+        mpCallback.OnReportReceived(*this, ByteSpan(aPayload->Start(), aPayload->DataLength()));
+    }
+
     reader.Init(std::move(aPayload));
     err = report.Init(reader);
     SuccessOrExit(err);

@@ -84,6 +84,17 @@ public:
         virtual ~Callback() = default;
 
         /**
+         * (b/504587111) 
+         * @brief Called before processing any of the data payload of a ReportData message.
+         * 
+         * This can be used to instrument incoming report processing.
+         * 
+         * @param[in] apReadClient The read client that received the report.
+         * @param[in] aReportPayload The entire payload (to observe, not mutate) from the data report.
+         */
+        virtual void OnReportReceived(const ReadClient & apReadClient, ByteSpan aReportPayload) {}
+
+        /**
          * Used to notify a (maybe empty) report data is received from peer and the subscription and the peer is alive.
          *
          * The ReadClient MUST NOT be destroyed during execution of this callback (i.e. before the callback returns).

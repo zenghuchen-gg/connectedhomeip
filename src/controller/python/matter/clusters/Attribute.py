@@ -442,6 +442,7 @@ class SubscriptionTransaction:
             int, SubscriptionTransaction], None] = DefaultErrorCallback
         self._onReportBeginCb: Callable[[SubscriptionTransaction], None] = DefaultReportBeginCallback
         self._onReportEndCb: Callable[[SubscriptionTransaction], None] = DefaultReportEndCallback
+        self._onReadRawReportCb: Callable[[bytes, SubscriptionTransaction], None] = DefaultReadRawReportCallback
         self._readTransaction = transaction
         self._subscriptionId = subscriptionId
         self._devCtrl = devCtrl
@@ -450,6 +451,7 @@ class SubscriptionTransaction:
             SubscriptionTransaction], None]] = None
         self._onResubscriptionSucceededCb_isAsync = False
         self._onResubscriptionAttemptedCb_isAsync = False
+        self.is_priming = False
         builtins.chipStack.RegisterSubscription(self)
 
     def GetAttributes(self):
@@ -583,6 +585,15 @@ class SubscriptionTransaction:
         if callback is not None:
             self._onErrorCb = callback
 
+    def SetReadRawReportCallback(self, callback: Callable[[bytes, SubscriptionTransaction], None]):
+        if callback is not None:
+            self._onReadRawReportCb = callback
+            self.is_priming = True
+            for data in self._readTransaction._raw_reports:
+                self._onReadRawReportCb(data, self)
+            self.is_priming = False
+            self._readTransaction._raw_reports.clear()
+
     @property
     def OnAttributeChangeCb(self) -> Callable[[TypedAttributePath, SubscriptionTransaction], None]:
         return self._onAttributeChangeCb
@@ -602,6 +613,10 @@ class SubscriptionTransaction:
     @property
     def OnErrorCb(self) -> Callable[[int, SubscriptionTransaction], None]:
         return self._onErrorCb
+
+    @property
+    def OnReadRawReportCb(self) -> Callable[[bytes, SubscriptionTransaction], None]:
+        return self._onReadRawReportCb
 
     @property
     def subscriptionId(self) -> int:
@@ -649,6 +664,10 @@ def DefaultEventChangeCallback(data: EventReadResult, transaction: SubscriptionT
 
 def DefaultErrorCallback(chipError: int, transaction: SubscriptionTransaction):
     print(f"Error during Subscription: Matter Stack Error {chipError}")
+
+
+def DefaultReadRawReportCallback(data: bytes, transaction: SubscriptionTransaction):
+    pass
 
 
 def DefaultReportBeginCallback(transaction: SubscriptionTransaction):
@@ -699,6 +718,7 @@ class AsyncReadTransaction:
         self._changedPathSet: Set[AttributePath] = set()
         self._pReadClient = None
         self._resultError: Optional[PyChipError] = None
+        self._raw_reports: List[bytes] = []
 
     def SetClientObjPointers(self, pReadClient):
         self._pReadClient = pReadClient
@@ -717,6 +737,15 @@ class AsyncReadTransaction:
     def GetSubscriptionHandler(self) -> SubscriptionTransaction | None:
         """Returns subscription transaction."""
         return self._subscription_handler
+
+    def handleRawReport(self, data: bytes):
+        try:
+            if self._subscription_handler is not None:
+                self._subscription_handler.OnReadRawReportCb(data, self._subscription_handler)
+            else:
+                self._raw_reports.append(data)
+        except Exception as ex:
+            LOGGER.exception(ex)
 
     def handleAttributeData(self, path: AttributePath, dataVersion: int, status: int, data: bytes):
         try:
@@ -916,6 +945,8 @@ class AsyncWriteTransaction:
         self._event_loop.call_soon_threadsafe(self._handleDone)
 
 
+_OnReadRawReportCallbackFunct = CFUNCTYPE(
+    None, py_object, c_void_p, c_size_t)
 _OnReadAttributeDataCallbackFunct = CFUNCTYPE(
     None, py_object, c_uint32, c_uint16, c_uint32, c_uint32, c_uint8, c_void_p, c_size_t)
 _OnSubscriptionEstablishedCallbackFunct = CFUNCTYPE(None, py_object, c_uint32)
@@ -931,6 +962,12 @@ _OnReportBeginCallbackFunct = CFUNCTYPE(
     None, py_object)
 _OnReportEndCallbackFunct = CFUNCTYPE(
     None, py_object)
+
+
+@_OnReadRawReportCallbackFunct
+def _OnReadRawReportCallback(closure, data, length):
+    dataBytes = ctypes.string_at(data, length)
+    closure.handleRawReport(dataBytes[:])
 
 
 @_OnReadAttributeDataCallbackFunct
@@ -1288,7 +1325,8 @@ def Init():
                    _OnWriteResponseCallbackFunct, _OnWriteErrorCallbackFunct, _OnWriteDoneCallbackFunct])
         handle.pychip_ReadClient_Read.restype = PyChipError
         setter.Set('pychip_ReadClient_InitCallbacks', None, [
-                   _OnReadAttributeDataCallbackFunct, _OnReadEventDataCallbackFunct,
+                   _OnReadRawReportCallbackFunct, _OnReadAttributeDataCallbackFunct,
+                   _OnReadEventDataCallbackFunct,
                    _OnSubscriptionEstablishedCallbackFunct, _OnResubscriptionAttemptedCallbackFunct,
                    _OnReadErrorCallbackFunct, _OnReadDoneCallbackFunct,
                    _OnReportBeginCallbackFunct, _OnReportEndCallbackFunct])
@@ -1296,7 +1334,7 @@ def Init():
     handle.pychip_WriteClient_InitCallbacks(
         _OnWriteResponseCallback, _OnWriteErrorCallback, _OnWriteDoneCallback)
     handle.pychip_ReadClient_InitCallbacks(
-        _OnReadAttributeDataCallback, _OnReadEventDataCallback,
+        _OnReadRawReportCallback, _OnReadAttributeDataCallback, _OnReadEventDataCallback,
         _OnSubscriptionEstablishedCallback, _OnResubscriptionAttemptedCallback, _OnReadErrorCallback, _OnReadDoneCallback,
         _OnReportBeginCallback, _OnReportEndCallback)
 
