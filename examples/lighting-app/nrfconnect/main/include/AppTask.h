@@ -22,6 +22,7 @@
 #include "LEDWidget.h"
 #include "PWMDevice.h"
 
+#include <app/data-model-provider/JitterDeferredAttributeChangeListener.h>
 #include <platform/CHIPDeviceLayer.h>
 
 #if CONFIG_CHIP_FACTORY_DATA
@@ -53,6 +54,8 @@ public:
     };
 
     CHIP_ERROR StartApp();
+
+    static chip::app::DataModel::JitterDeferredAttributeChangeListener & GetCustomizedAttributeChangeListener();
 
     void UpdateClusterState();
     PWMDevice & GetPWMDevice() { return mPWMDevice; }

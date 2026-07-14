@@ -26,6 +26,7 @@
 
 #include <DeviceInfoProviderImpl.h>
 #include <app-common/zap-generated/attributes/Accessors.h>
+#include <app/InteractionModelEngine.h>
 #include <app/TestEventTriggerDelegate.h>
 #include <app/clusters/identify-server/identify-server.h>
 #include <app/clusters/network-commissioning/network-commissioning.h>
@@ -41,6 +42,7 @@
 #include <lib/core/ErrorStr.h>
 #include <lib/support/CHIPMem.h>
 #include <lib/support/CodeUtils.h>
+#include <platform/DefaultTimerDelegate.h>
 #include <platform/nrfconnect/FactoryResetTestEventTriggerHandler.h>
 #include <setup_payload/OnboardingCodesUtil.h>
 #include <system/SystemClock.h>
@@ -304,8 +306,9 @@ CHIP_ERROR AppTask::Init()
     gExampleDeviceInfoProvider.SetStorageDelegate(initParams.persistentStorageDelegate);
     chip::DeviceLayer::SetDeviceInfoProvider(&gExampleDeviceInfoProvider);
 
-    initParams.dataModelProvider        = CodegenDataModelProviderInstance(initParams.persistentStorageDelegate);
-    initParams.testEventTriggerDelegate = &sTestEventTriggerDelegate;
+    initParams.dataModelProvider                = CodegenDataModelProviderInstance(initParams.persistentStorageDelegate);
+    initParams.dataModelAttributeChangeListener = &GetCustomizedAttributeChangeListener();
+    initParams.testEventTriggerDelegate         = &sTestEventTriggerDelegate;
 
 #if CHIP_SYSTEM_CONFIG_USE_OPENTHREAD_ENDPOINT
     // Set up OpenThread configuration when OpenThread is included
@@ -779,4 +782,12 @@ void AppTask::UpdateClusterState()
             LOG_ERR("Updating level cluster failed: %x", to_underlying(status));
         }
     });
+}
+
+chip::app::DataModel::JitterDeferredAttributeChangeListener & AppTask::GetCustomizedAttributeChangeListener()
+{
+    static chip::app::DefaultTimerDelegate sTimerDelegate;
+    static chip::app::DataModel::JitterDeferredAttributeChangeListener sCustomizedAttributeChangeListener(
+        &chip::app::InteractionModelEngine::GetInstance()->GetReportingEngine(), sTimerDelegate);
+    return sCustomizedAttributeChangeListener;
 }
