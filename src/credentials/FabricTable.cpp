@@ -1081,6 +1081,8 @@ CHIP_ERROR FabricTable::Init(const FabricTable::InitParams & initParams)
     mOpCertStore         = initParams.opCertStore;
 
     ChipLogDetail(FabricProvisioning, "Initializing FabricTable from persistent storage");
+    ChipLogProgress(FabricProvisioning, "CHIP_CONFIG_SECURE_SESSION_POOL_SIZE: %d", CHIP_CONFIG_SECURE_SESSION_POOL_SIZE);
+    ChipLogProgress(FabricProvisioning, "CHIP_CONFIG_MINMDNS_MAX_PARALLEL_RESOLVES: %d", CHIP_CONFIG_MINMDNS_MAX_PARALLEL_RESOLVES);
 
     // Load the current fabrics from the storage.
     static_assert(kMaxValidFabricIndex <= UINT8_MAX, "Cannot create more fabrics than UINT8_MAX");

@@ -424,7 +424,7 @@ def TestOnlySendBatchCommands(future: Future, eventLoop, device, commands: List[
     )
 
 
-def SendGroupCommand(groupId: int, devCtrl: c_void_p, payload: ClusterCommand, busyWaitMs: Union[None, int] = None) -> PyChipError:
+def SendGroupCommand(groupId: int, devCtrl: c_void_p, payload: ClusterCommand, busyWaitMs: Union[None, int] = None, delayRequestMs: Union[None, int] = None) -> PyChipError:
     ''' Send a cluster-object encapsulated group command to a device and does the following:
             - None (on a successful response containing no data)
             - Raises an exception if any errors are encountered.
@@ -437,6 +437,7 @@ def SendGroupCommand(groupId: int, devCtrl: c_void_p, payload: ClusterCommand, b
             c_uint16(groupId), devCtrl,
             payload.cluster_id, payload.command_id, payloadTLV, len(payloadTLV),
             ctypes.c_uint16(0 if busyWaitMs is None else busyWaitMs),
+            ctypes.c_uint32(0 if delayRequestMs is None else delayRequestMs),
         ))
 
 
@@ -457,7 +458,7 @@ def Init():
         setter.Set('pychip_CommandSender_TestOnlySendCommandTimedRequestNoTimedInvoke',
                    PyChipError, [py_object, c_void_p, c_uint16, c_uint32, c_uint32, c_char_p, c_size_t, c_uint16, c_uint16, c_bool])
         setter.Set('pychip_CommandSender_SendGroupCommand',
-                   PyChipError, [c_uint16, c_void_p, c_uint32, c_uint32, c_char_p, c_size_t, c_uint16])
+                   PyChipError, [c_uint16, c_void_p, c_uint32, c_uint32, c_char_p, c_size_t, c_uint16, c_uint32])
         setter.Set('pychip_CommandSender_InitCallbacks', None, [
                    _OnCommandSenderResponseCallbackFunct, _OnCommandSenderErrorCallbackFunct, _OnCommandSenderDoneCallbackFunct, _TestOnlyOnCommandSenderDoneCallbackFunct])
 

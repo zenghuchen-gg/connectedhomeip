@@ -113,6 +113,16 @@ CHIP_ERROR InvokeRequestMessage::Parser::GetInvokeRequests(InvokeRequests::Parse
     return apInvokeRequests->Init(reader);
 }
 
+InvokeRequestMessage::Builder & InvokeRequestMessage::Builder::DelayRequest(const uint32_t aDelayRequest)
+{
+    if (mError == CHIP_NO_ERROR)
+    {
+        // ChipLogError(DataManagement, "Going to build delay into invoke msg: %d", aDelayRequest);
+        mError = mpWriter->Put(TLV::ContextTag(Tag::kDelayRequest), aDelayRequest);
+    }
+    return *this;
+}
+
 CHIP_ERROR InvokeRequestMessage::Builder::InitWithEndBufferReserved(TLV::TLVWriter * const apWriter)
 {
     ReturnErrorOnFailure(Init(apWriter));

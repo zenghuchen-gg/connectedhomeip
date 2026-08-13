@@ -104,7 +104,7 @@ declare_args() {
       current_os == "ios"
 
   # When using minmdns, set the number of parallel resolves
-  chip_config_minmdns_max_parallel_resolves = 2
+  chip_config_minmdns_max_parallel_resolves = 64
 
   # If set to true, adds a string "info" field to Cancelable.
   # Only here for backwards compat.  Generally, THIS SHOULD NOT BE SET TO TRUE.

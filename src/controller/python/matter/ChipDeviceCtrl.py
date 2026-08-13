@@ -1790,7 +1790,7 @@ class ChipDeviceControllerBase():
         res.raise_on_error()
         return await future
 
-    def SendGroupCommand(self, groupid: int, payload: ClusterObjects.ClusterCommand, busyWaitMs: typing.Optional[int] = None):
+    def SendGroupCommand(self, groupid: int, payload: ClusterObjects.ClusterCommand, busyWaitMs: typing.Optional[int] = None, delayRequestMs: typing.Optional[int] = None):
         '''
         Send a group cluster-object encapsulated command to a group_id and get returned a future
         that can be awaited upon to get confirmation command was sent.
@@ -1805,7 +1805,7 @@ class ChipDeviceControllerBase():
 
         assert self.devCtrl is not None
         ClusterCommand.SendGroupCommand(
-            groupid, self.devCtrl, payload, busyWaitMs=busyWaitMs).raise_on_error()
+            groupid, self.devCtrl, payload, busyWaitMs=busyWaitMs, delayRequestMs=delayRequestMs).raise_on_error()
 
         # None is the expected return for sending group commands.
         return

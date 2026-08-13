@@ -21,8 +21,10 @@
 #include <lib/dnssd/TxtFields.h>
 #include <lib/dnssd/minimal_mdns/Logging.h>
 #include <lib/dnssd/minimal_mdns/MinMdnsConfig.h>
+#include <lib/dnssd/minimal_mdns/core/QNameString.h>
 #include <lib/dnssd/minimal_mdns/core/RecordWriter.h>
 #include <lib/support/CHIPMemString.h>
+#include <lib/support/logging/CHIPLogging.h>
 #include <tracing/macros.h>
 
 namespace chip {
@@ -123,9 +125,10 @@ CHIP_ERROR StoredServerName::Set(SerializedQNameIterator value)
     RecordWriter writer(&output);
 
     writer.WriteQName(value);
-
+//    ChipLogError(Discovery, "~~~~~~~~~~StoredServerName::Set: QName for buffer: %s", QNameString(value).c_str());
     if (!writer.Fit())
     {
+        ChipLogError(Discovery, "StoredServerName::Set: QName too long for buffer: %s", QNameString(value).c_str());
         Clear();
         return CHIP_ERROR_NO_MEMORY;
     }
@@ -323,6 +326,7 @@ CHIP_ERROR IncrementalResolver::OnIpAddress(Inet::InterfaceId interface, const I
 {
     if (mCommonResolutionData.numIPs >= MATTER_ARRAY_SIZE(mCommonResolutionData.ipAddress))
     {
+        ChipLogError(Discovery, "IncrementalResolver::OnIpAddress: Too many IPs resolved");
         return CHIP_ERROR_NO_MEMORY;
     }
 

@@ -49,19 +49,19 @@ PyChipError pychip_CommandSender_TestOnlySendCommandTimedRequestNoTimedInvoke(
 
 PyChipError pychip_CommandSender_SendGroupCommand(chip::GroupId groupId, chip::Controller::DeviceCommissioner * devCtrl,
                                                   chip::ClusterId clusterId, chip::CommandId commandId, const uint8_t * payload,
-                                                  size_t length, uint16_t busyWaitMs);
+                                                  size_t length, uint16_t busyWaitMs, uint32_t delayRequestMs);
 }
 
 namespace chip {
 namespace python {
 
 using OnCommandSenderResponseCallback     = void (*)(PyObject appContext, chip::EndpointId endpointId, chip::ClusterId clusterId,
-                                                 chip::CommandId commandId, size_t index,
-                                                 std::underlying_type_t<Protocols::InteractionModel::Status> status,
-                                                 chip::ClusterStatus clusterStatus, const uint8_t * payload, uint32_t length);
+                                                     chip::CommandId commandId, size_t index,
+                                                     std::underlying_type_t<Protocols::InteractionModel::Status> status,
+                                                     chip::ClusterStatus clusterStatus, const uint8_t * payload, uint32_t length);
 using OnCommandSenderErrorCallback        = void (*)(PyObject appContext,
-                                              std::underlying_type_t<Protocols::InteractionModel::Status> status,
-                                              chip::ClusterStatus clusterStatus, PyChipError chiperror);
+                                                     std::underlying_type_t<Protocols::InteractionModel::Status> status,
+                                                     chip::ClusterStatus clusterStatus, PyChipError chiperror);
 using OnCommandSenderDoneCallback         = void (*)(PyObject appContext);
 using TestOnlyOnCommandSenderDoneCallback = void (*)(PyObject appContext, python::TestOnlyPyOnDoneInfo testOnlyDoneInfo);
 
@@ -482,14 +482,19 @@ exit:
 
 PyChipError pychip_CommandSender_SendGroupCommand(chip::GroupId groupId, chip::Controller::DeviceCommissioner * devCtrl,
                                                   chip::ClusterId clusterId, chip::CommandId commandId, const uint8_t * payload,
-                                                  size_t length, uint16_t busyWaitMs)
+                                                  size_t length, uint16_t busyWaitMs, uint32_t delayRequestMs)
 {
     CHIP_ERROR err = CHIP_NO_ERROR;
+    ChipLogError(DataManagement,
+                 "-----------*********-----------------pychip_CommandSender_SendGroupCommand add DelayRequest %d ms",
+                 delayRequestMs);
 
     chip::Messaging::ExchangeManager * exchangeManager = chip::app::InteractionModelEngine::GetInstance()->GetExchangeManager();
     VerifyOrReturnError(exchangeManager != nullptr, ToPyChipError(CHIP_ERROR_INCORRECT_STATE));
 
-    std::unique_ptr<CommandSender> sender = std::make_unique<CommandSender>(nullptr /* callback */, exchangeManager);
+    // std::unique_ptr<CommandSender> sender = std::make_unique<CommandSender>(nullptr /* callback */, exchangeManager);
+    std::unique_ptr<CommandSender> sender = std::make_unique<CommandSender>(
+        nullptr /* callback */, exchangeManager, false, false, false, delayRequestMs /*0x3E803E8 base 1000 ms + jitter 1000 ms */);
 
     app::CommandPathParams cmdParams = { groupId, clusterId, commandId, (app::CommandPathFlags::kGroupIdValid) };
 

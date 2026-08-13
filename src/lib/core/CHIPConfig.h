@@ -801,8 +801,8 @@
  *
  */
 #ifndef CHIP_CONFIG_SECURE_SESSION_POOL_SIZE
-#define CHIP_CONFIG_SECURE_SESSION_POOL_SIZE (CHIP_CONFIG_MAX_FABRICS * 3 + 2)
-#endif // CHIP_CONFIG_SECURE_SESSION_POOL_SIZE
+#define CHIP_CONFIG_SECURE_SESSION_POOL_SIZE 1000 //(CHIP_CONFIG_MAX_FABRICS * 3 + 2)
+#endif                                            // CHIP_CONFIG_SECURE_SESSION_POOL_SIZE
 
 /**
  *  @def CHIP_CONFIG_MAX_GROUP_DATA_PEERS
@@ -851,6 +851,41 @@
 
 #ifdef CHIP_NON_PRODUCTION_MARKER
 extern const char CHIP_NON_PRODUCTION_MARKER[];
+#endif
+
+#ifdef __cplusplus
+/**
+ *  @def CHIP_CONFIG_RMP_DEFAULT_MAX_RETRANS
+ *
+ *  @brief
+ *    The maximum number of retransmissions before giving up.
+ */
+#ifndef CHIP_CONFIG_RMP_DEFAULT_MAX_RETRANS
+#define CHIP_CONFIG_RMP_DEFAULT_MAX_RETRANS 20
+#endif
+
+#endif
+
+/**
+ *  @def CHIP_CONFIG_MRP_LOCAL_ACTIVE_RETRY_INTERVAL
+ *
+ *  @brief
+ *    The default retransmission interval in active mode.
+ */
+/*
+#ifndef CHIP_CONFIG_MRP_LOCAL_ACTIVE_RETRY_INTERVAL
+#define CHIP_CONFIG_MRP_LOCAL_ACTIVE_RETRY_INTERVAL (chip::System::Clock::Milliseconds32(10000))
+#endif
+*/
+
+/**
+ *  @def CHIP_CONFIG_MRP_RETRY_INTERVAL_SENDER_BOOST
+ *
+ *  @brief
+ *    A boost to the retransmission interval to account for network congestion.
+ */
+#ifndef CHIP_CONFIG_MRP_RETRY_INTERVAL_SENDER_BOOST
+#define CHIP_CONFIG_MRP_RETRY_INTERVAL_SENDER_BOOST (chip::System::Clock::Milliseconds32(5000))
 #endif
 
 /**
@@ -1444,7 +1479,7 @@ extern const char CHIP_NON_PRODUCTION_MARKER[];
  *        to be resolved.
  */
 #ifndef CHIP_CONFIG_MINMDNS_MAX_PARALLEL_RESOLVES
-#define CHIP_CONFIG_MINMDNS_MAX_PARALLEL_RESOLVES 2
+#define CHIP_CONFIG_MINMDNS_MAX_PARALLEL_RESOLVES 20
 #endif // CHIP_CONFIG_MINMDNS_MAX_PARALLEL_RESOLVES
 
 /**
