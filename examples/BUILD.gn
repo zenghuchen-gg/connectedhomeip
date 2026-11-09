@@ -42,6 +42,8 @@ if (chip_build_tests) {
       "${chip_root}/examples/all-devices-app/all-devices-common/device/types/air-quality-sensor/tests",
       "${chip_root}/examples/all-devices-app/all-devices-common/device/types/battery-storage/tests",
       "${chip_root}/examples/all-devices-app/all-devices-common/device/types/doorbell/tests",
+      "${chip_root}/examples/all-devices-app/all-devices-common/device/types/mounted-dimmable-load-control/tests",
+      "${chip_root}/examples/all-devices-app/all-devices-common/device/types/mounted-on-off-control/tests",
       "${chip_root}/examples/all-devices-app/all-devices-common/device/types/on-off-light-switch/tests",
       "${chip_root}/examples/all-devices-app/all-devices-common/device/types/water-heater/tests",
       "${chip_root}/examples/all-devices-app/all-devices-common/oob-accessors/tests",

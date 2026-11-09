@@ -23,15 +23,35 @@
 namespace chip {
 namespace app {
 
+namespace {
+
+constexpr DataModel::DeviceTypeEntry kMountedDimmableOnly[] = {
+    Device::Type::kMountedDimmableLoadControl,
+};
+
+constexpr DataModel::DeviceTypeEntry kMountedDimmableWithPlug[] = {
+    Device::Type::kMountedDimmableLoadControl,
+    Device::Type::kDimmablePlugInUnit,
+};
+
+} // namespace
+
+MountedDimmableLoadControl::MountedDimmableLoadControl(const Context & context) : MountedDimmableLoadControl(context, Config{}) {}
+
 MountedDimmableLoadControl::MountedDimmableLoadControl(const Context & context, const Config & config) :
-    DimmableLoad(Span<const DataModel::DeviceTypeEntry>(&Device::Type::kMountedDimmableLoadControl, 1), context,
+    DimmableLoad(config.includeDimmablePlugInUnit ? Span<const DataModel::DeviceTypeEntry>(kMountedDimmableWithPlug)
+                                                  : Span<const DataModel::DeviceTypeEntry>(kMountedDimmableOnly),
+                 context,
                  Delegates{
                      .onOff        = *this,
                      .levelControl = *this,
                      .effect       = *this,
                      .identify     = context.identifyDelegate,
                  },
-                 config)
+                 DimmableLoad::Config{
+                     .levelControl = config.levelControl,
+                     .tagList      = config.tagList,
+                 })
 {}
 
 } // namespace app

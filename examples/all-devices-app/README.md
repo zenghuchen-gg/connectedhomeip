@@ -111,7 +111,9 @@ The application supports the following device types (specified via the
 -   `microwave-oven-simulated`
 -   `mode-select`
 -   `mounted-dimmable-load-control`
+-   `mounted-dimmable-load-control-with-plug`
 -   `mounted-on-off-control`
+-   `mounted-on-off-control-with-plug`
 -   `network-infrastructure-manager-simulated`
 -   `occupancy-sensor`
 -   `on-off-light`
