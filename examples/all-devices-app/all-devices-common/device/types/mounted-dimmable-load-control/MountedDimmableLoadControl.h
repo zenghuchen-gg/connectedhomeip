@@ -28,9 +28,17 @@ class MountedDimmableLoadControl : private LoggingDimmableDelegate, public Dimma
 {
 public:
     using Context = DimmableLoad::Context;
-    using Config  = DimmableLoad::Config;
 
-    MountedDimmableLoadControl(const Context & context, const Config & config = {});
+    struct Config
+    {
+        DimmableLoad::LevelControlConfig levelControl                           = {};
+        Span<const Clusters::Globals::Structs::SemanticTagStruct::Type> tagList = {};
+        /// Also expose Dimmable Plug-in Unit (0x010B) in Descriptor.DeviceTypeList on the same endpoint.
+        bool includeDimmablePlugInUnit = false;
+    };
+
+    explicit MountedDimmableLoadControl(const Context & context);
+    MountedDimmableLoadControl(const Context & context, const Config & config);
     ~MountedDimmableLoadControl() override = default;
 };
 

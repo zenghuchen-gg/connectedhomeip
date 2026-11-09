@@ -613,7 +613,14 @@ private:
         {
             RegisterCreator("dimmable-plug-in-unit", [this]() {
                 VerifyOrDie(mContext.has_value());
-                return MakeDevice<DimmablePlugInUnit>(
+                // Tagged with PositionTag::kTop to disambiguate from mounted-dimmable-load-control-with-plug under wildcard (*).
+                static const Clusters::Globals::Structs::SemanticTagStruct::Type kDimmablePlugTag = {
+                    .mfgCode     = DataModel::NullNullable,
+                    .namespaceID = to_underlying(Clusters::Globals::SemanticTagNamespaceId::kPosition),
+                    .tag         = static_cast<uint8_t>(Clusters::Globals::PositionTag::kTop),
+                };
+                return MakeDeviceWithTags<DimmablePlugInUnit>(
+                    Span(&kDimmablePlugTag, 1),
                     DimmablePlugInUnit::Context{
                         .groupDataProvider = mContext->groupDataProvider,
                         .fabricTable       = mContext->fabricTable,
@@ -649,7 +656,13 @@ private:
         {
             RegisterCreator("mounted-dimmable-load-control", [this]() {
                 VerifyOrDie(mContext.has_value());
-                return MakeDevice<MountedDimmableLoadControl>(
+                static const Clusters::Globals::Structs::SemanticTagStruct::Type kMountedDimmableTag = {
+                    .mfgCode     = DataModel::NullNullable,
+                    .namespaceID = to_underlying(Clusters::Globals::SemanticTagNamespaceId::kPosition),
+                    .tag         = static_cast<uint8_t>(Clusters::Globals::PositionTag::kTop),
+                };
+                return MakeDeviceWithTags<MountedDimmableLoadControl>(
+                    Span(&kMountedDimmableTag, 1),
                     MountedDimmableLoadControl::Context{
                         .groupDataProvider = mContext->groupDataProvider,
                         .fabricTable       = mContext->fabricTable,
@@ -657,6 +670,28 @@ private:
                         .identifyDelegate  = mContext->identifyDelegate,
                     },
                     MountedDimmableLoadControl::Config{ .levelControl = DimmableLoad::LevelControlConfig::CiPicsDefaults() });
+            });
+            RegisterCreator("mounted-dimmable-load-control-with-plug", [this]() {
+                VerifyOrDie(mContext.has_value());
+                // Tagged with PositionTag::kBottom to disambiguate from mounted-dimmable-load-control and dimmable-plug-in-unit
+                // under wildcard allocation (*).
+                static const Clusters::Globals::Structs::SemanticTagStruct::Type kMountedDimmableWithPlugTag = {
+                    .mfgCode     = DataModel::NullNullable,
+                    .namespaceID = to_underlying(Clusters::Globals::SemanticTagNamespaceId::kPosition),
+                    .tag         = static_cast<uint8_t>(Clusters::Globals::PositionTag::kBottom),
+                };
+                return MakeDeviceWithTags<MountedDimmableLoadControl>(
+                    Span(&kMountedDimmableWithPlugTag, 1),
+                    MountedDimmableLoadControl::Context{
+                        .groupDataProvider = mContext->groupDataProvider,
+                        .fabricTable       = mContext->fabricTable,
+                        .timerDelegate     = mContext->timerDelegate,
+                        .identifyDelegate  = mContext->identifyDelegate,
+                    },
+                    MountedDimmableLoadControl::Config{
+                        .levelControl              = DimmableLoad::LevelControlConfig::CiPicsDefaults(),
+                        .includeDimmablePlugInUnit = true,
+                    });
             });
         }
         if constexpr (ALL_DEVICES_ENABLE_DOORBELL)
@@ -677,12 +712,36 @@ private:
         {
             RegisterCreator("mounted-on-off-control", [this]() {
                 VerifyOrDie(mContext.has_value());
-                return MakeDevice<MountedOnOffControl>(MountedOnOffControl::Context{
-                    .groupDataProvider = mContext->groupDataProvider,
-                    .fabricTable       = mContext->fabricTable,
-                    .timerDelegate     = mContext->timerDelegate,
-                    .identifyDelegate  = mContext->identifyDelegate,
-                });
+                static const Clusters::Globals::Structs::SemanticTagStruct::Type kMountedOnOffTag = {
+                    .mfgCode     = DataModel::NullNullable,
+                    .namespaceID = to_underlying(Clusters::Globals::SemanticTagNamespaceId::kPosition),
+                    .tag         = static_cast<uint8_t>(Clusters::Globals::PositionTag::kTop),
+                };
+                return MakeDeviceWithTags<MountedOnOffControl>(Span(&kMountedOnOffTag, 1),
+                                                               MountedOnOffControl::Context{
+                                                                   .groupDataProvider = mContext->groupDataProvider,
+                                                                   .fabricTable       = mContext->fabricTable,
+                                                                   .timerDelegate     = mContext->timerDelegate,
+                                                                   .identifyDelegate  = mContext->identifyDelegate,
+                                                               });
+            });
+            RegisterCreator("mounted-on-off-control-with-plug", [this]() {
+                VerifyOrDie(mContext.has_value());
+                // Tagged with PositionTag::kLeft to disambiguate from mounted-on-off-control (kTop), on-off-plug-in-unit (kTop),
+                // and on-off-plug-with-sensors (kBottom) under wildcard allocation (*).
+                static const Clusters::Globals::Structs::SemanticTagStruct::Type kMountedOnOffWithPlugTag = {
+                    .mfgCode     = DataModel::NullNullable,
+                    .namespaceID = to_underlying(Clusters::Globals::SemanticTagNamespaceId::kPosition),
+                    .tag         = static_cast<uint8_t>(Clusters::Globals::PositionTag::kLeft),
+                };
+                return MakeDeviceWithTags<MountedOnOffControl>(Span(&kMountedOnOffWithPlugTag, 1),
+                                                               MountedOnOffControl::Context{
+                                                                   .groupDataProvider = mContext->groupDataProvider,
+                                                                   .fabricTable       = mContext->fabricTable,
+                                                                   .timerDelegate     = mContext->timerDelegate,
+                                                                   .identifyDelegate  = mContext->identifyDelegate,
+                                                               },
+                                                               MountedOnOffControl::Config{ .includeOnOffPlugInUnit = true });
             });
         }
         if constexpr (ALL_DEVICES_ENABLE_NETWORK_INFRASTRUCTURE_MANAGER)

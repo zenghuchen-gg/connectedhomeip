@@ -20,13 +20,33 @@
 
 namespace chip::app {
 
-MountedOnOffControl::MountedOnOffControl(const Context & context, Clusters::OnOffDelegate * customOnOff,
+namespace {
+
+constexpr DataModel::DeviceTypeEntry kMountedOnOffOnly[] = {
+    Device::Type::kMountedOnOffControl,
+};
+
+constexpr DataModel::DeviceTypeEntry kMountedOnOffWithPlug[] = {
+    Device::Type::kMountedOnOffControl,
+    Device::Type::kOnOffPlugInUnit,
+};
+
+} // namespace
+
+MountedOnOffControl::MountedOnOffControl(const Context & context, const Config & config, Clusters::OnOffDelegate * customOnOff,
                                          Clusters::OnOffEffectDelegate * customEffect,
                                          Clusters::IdentifyDelegate * customIdentify) :
-    OnOffLoad(Span<const DataModel::DeviceTypeEntry>(&Device::Type::kMountedOnOffControl, 1),
+    OnOffLoad(config.includeOnOffPlugInUnit ? Span<const DataModel::DeviceTypeEntry>(kMountedOnOffWithPlug)
+                                            : Span<const DataModel::DeviceTypeEntry>(kMountedOnOffOnly),
               customOnOff ? *customOnOff : static_cast<Clusters::OnOffDelegate &>(*this),
               customEffect ? *customEffect : static_cast<Clusters::OnOffEffectDelegate &>(*this),
               customIdentify ? *customIdentify : context.identifyDelegate, context)
+{}
+
+MountedOnOffControl::MountedOnOffControl(const Context & context, Clusters::OnOffDelegate * customOnOff,
+                                         Clusters::OnOffEffectDelegate * customEffect,
+                                         Clusters::IdentifyDelegate * customIdentify) :
+    MountedOnOffControl(context, Config{}, customOnOff, customEffect, customIdentify)
 {}
 
 } // namespace chip::app

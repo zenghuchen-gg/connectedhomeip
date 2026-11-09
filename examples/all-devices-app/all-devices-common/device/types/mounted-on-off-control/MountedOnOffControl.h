@@ -26,9 +26,20 @@ class MountedOnOffControl : private LoggingOnOffDelegate, public OnOffLoad
 public:
     using Context = OnOffLoad::Context;
 
+    struct Config
+    {
+        /// Also expose On/Off Plug-in Unit (0x010A) in Descriptor.DeviceTypeList on the same endpoint.
+        bool includeOnOffPlugInUnit = false;
+    };
+
     explicit MountedOnOffControl(const Context & context, Clusters::OnOffDelegate * customOnOff = nullptr,
                                  Clusters::OnOffEffectDelegate * customEffect = nullptr,
                                  Clusters::IdentifyDelegate * customIdentify  = nullptr);
+
+    MountedOnOffControl(const Context & context, const Config & config, Clusters::OnOffDelegate * customOnOff = nullptr,
+                        Clusters::OnOffEffectDelegate * customEffect = nullptr,
+                        Clusters::IdentifyDelegate * customIdentify  = nullptr);
+
     ~MountedOnOffControl() override = default;
 };
 
